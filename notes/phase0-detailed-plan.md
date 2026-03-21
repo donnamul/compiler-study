@@ -1,8 +1,8 @@
-# Phase 0: 환경 세팅 + AI 컴파일러 생태계 조감 — 상세 계획
+# Phase 0: 환경 세팅 + MLIR 기초 감각 만들기 — 상세 계획
 
 > **기간**: 2주 (1~2주차)
 > **시간**: 주중 저녁 1~1.5시간 + 주말 3~4시간
-> **핵심 산출물**: MLIR 빌드 완료, GitHub 학습 리포, 블로그 글 1편, 생태계 조감도
+> **핵심 산출물**: MLIR 빌드 완료, GitHub 학습 리포, Week 01~02 노트, MLIR 기초 예제
 
 ---
 
@@ -37,7 +37,7 @@
 
 3. `README.md` 초안 작성:
    - 자기소개 (AI compiler engineer at HyperAccel, Legato 컴파일러 개발)
-   - 학습 목표 (MLIR C++ 레벨 이해 → Triton-to-tile-IR 기여)
+   - 학습 목표 (MLIR C++ 레벨 이해 → 이후 MLIR 관련 프로젝트 기여)
    - 16주 로드맵 요약
 
 **산출물:** GitHub 리포 생성 + README.md 커밋
@@ -146,159 +146,61 @@
 
 ---
 
-### Day 5 (주중 저녁, 1시간) — Triton-to-tile-IR 클론 + 탐험
+### Day 5 (주중 저녁, 1시간) — 수업 자료와 MLIR 개념 연결
 
 **할 일:**
-1. Triton-to-tile-IR 클론 + 빌드 시도
-   ```bash
-   git clone https://github.com/triton-lang/Triton-to-tile-IR.git
-   cd Triton-to-tile-IR
-   pip install -e .  # GPU 없어도 빌드 자체는 될 수 있음
-   ```
+1. 강의 PDF에서 IR/SSA/basic block 관련 장표 다시 보기
+   - `01_Intro.pdf`
+   - `09_Intermediate_Representation.pdf`
+   - 필요하면 `17_SSA.pdf` 앞부분
 
-2. 디렉토리 구조 탐험 (빌드 실패해도 코드는 읽을 수 있음)
-   ```
-   Triton-to-tile-IR/
-   ├── lib/                          ← C++ 핵심 코드
-   │   ├── Dialect/                  ← dialect 정의
-   │   └── Conversion/              ← ★ TritonToCudaTile 여기!
-   ├── include/                      ← 헤더 파일
-   ├── python/                       ← Python frontend
-   │   └── triton/                   ← compiler.py, driver.py 등
-   ├── third_party/
-   │   ├── nvidia/                   ← 기존 PTX 백엔드
-   │   └── tileir/                   ← ★ TileIR 백엔드
-   │       ├── backend/             
-   │       │   ├── compiler.py       ← ★ TileIR 컴파일 파이프라인
-   │       │   └── driver.py
-   │       └── PerformanceTuningTips.md
-   └── test/                         ← 테스트 파일
-   ```
+2. 이미 만든 `.mlir` 예제를 다시 열어 아래 개념과 연결
+   - operation
+   - value
+   - block
+   - region
+   - dialect
 
-3. 핵심 파일 3개만 열어서 구조 확인 (내용 이해 X, 구조만):
-   - `third_party/tileir/backend/compiler.py`: Python에서 컴파일 단계가 어떻게 정의되는지
-   - `lib/` 아래에서 `TritonToCudaTile` 관련 파일 찾기
-   - `third_party/nvidia/backend/compiler.py`: 기존 PTX 백엔드와 구조 비교
+3. `notes/week01.md`에 자기 말로 정리
+   - LangRef 용어 정리
+   - block argument vs LLVM phi
+   - attribute vs operand/result/type
 
-**산출물:** "Triton-to-tile-IR 디렉토리 구조 메모" (notes/week01.md에 추가)
+**산출물:** `notes/week01.md`의 LangRef/기초 개념 정리
 
 ---
 
-### Day 6~7 (주말, 3~4시간) — 생태계 조감도 + torch.compile 심화
+### Day 6~7 (주말, 3~4시간) — MLIR 기초 복습 + Toy 진입 준비
 
-**Day 6 전반 (2시간) — 참고 프로젝트 README 읽기:**
+**Day 6 전반 (2시간) — MLIR 문서 + Toy 미리보기:**
 
-각 프로젝트의 README를 읽고 아래 질문에 답:
+1. MLIR 공식 문서에서 아래만 다시 읽기
+   - LangRef의 operation / block / region / attribute / type
+   - Toy Tutorial Ch1 서론
 
-| 프로젝트 | 읽을 것 | 답할 질문 |
-|----------|---------|----------|
-| Triton 메인 | README.md | Triton의 컴파일 단계는 몇 개? 각 단계에서 뭘 하는가? |
-| cuTile Python | README.md + 공식 문서 intro | cuTile은 Triton과 어떤 레벨에서 다른가? |
-| StableHLO | README.md | StableHLO의 목표는 뭔가? 어떤 프레임워크/컴파일러와 연결되나? |
-| NVIDIA/cuda-tile | README.md | CUDA Tile IR dialect은 뭘 정의하나? |
-| TileGym | README.md | 어떤 커널 예제가 있나? (matmul, attention 등) |
+2. 목표
+   - Phase 1 들어가기 전에 AST / IR / SSA / dialect 개념을 한 번 더 고정
+   - "강의안 개념 → Toy 구현"으로 이어질 준비 만들기
 
-**Day 6 후반 (1시간) — torch.compile과 이 생태계의 연결:**
+**Day 6 후반 (1시간) — 예제 다시 읽기:**
 
-Legato/torch.compile 경험을 기반으로 "왜 이 생태계가 이렇게 생겼는지" 정리:
+이미 만든 `.mlir` 예제를 다시 열고 아래 질문에 답한다.
 
-```
-torch.compile의 세계:
-  Python → Dynamo (FX Graph) → AOTAutograd → Backend
+- 이 파일에서 operation은 무엇인가?
+- value는 어디서 정의되고 어디서 쓰이는가?
+- block argument는 어디서 보이는가?
+- region이 필요한 이유는 무엇인가?
 
-Backend 선택지:
-  1. TorchInductor → Triton 커널 (기존)
-  2. TorchInductor → Triton → CUDA Tile IR (Triton-to-tile-IR)
-  3. XLA backend → StableHLO → XLA 최적화 (PyTorch/XLA)
-  4. Legato backend → Legato IR → HyperAccel 하드웨어 (네가 만드는 것)
-  5. (미래) TorchInductor → cuTile → CUDA Tile IR
+**Day 7 (1~2시간) — Week 1 정리 + Week 2 준비:**
 
-핵심 통찰: torch.compile의 backend은 "교체 가능한 모듈"이고,
-각 backend은 결국 MLIR dialect conversion의 다른 인스턴스다.
-Triton-to-tile-IR은 이 "교체"의 구체적인 예시.
-```
-
-**Day 7 (1~2시간) — Triton IR 덤프 실험 + 블로그 초안:**
-
-1. Triton IR 덤프 실험 (GPU 있으면):
-   ```python
-   # experiments/triton-ir-dumps/vector_add.py
-   import triton
-   import triton.language as tl
-   import torch
-   
-   @triton.jit
-   def add_kernel(x_ptr, y_ptr, out_ptr, n, BLOCK: tl.constexpr):
-       pid = tl.program_id(0)
-       offs = pid * BLOCK + tl.arange(0, BLOCK)
-       mask = offs < n
-       x = tl.load(x_ptr + offs, mask=mask)
-       y = tl.load(y_ptr + offs, mask=mask)
-       tl.store(out_ptr + offs, x + y, mask=mask)
-   
-   x = torch.randn(1024, device='cuda')
-   y = torch.randn(1024, device='cuda')
-   out = torch.empty_like(x)
-   k = add_kernel[(1,)](x, y, out, 1024, BLOCK=1024)
-   
-   # IR 덤프
-   print("=== TTIR ===")
-   print(k.asm['ttir'])
-   print("=== TTGIR ===")
-   print(k.asm['ttgir'])
-   ```
-   GPU 없으면: PyTorch 블로그의 "Triton Kernel Compilation Stages" 글에서 예시 IR 복사해서 읽기 연습
-
-2. **torch.compile backend에서 Triton이 어떻게 호출되는지 복습:**
-   ```python
-   # 네가 이미 아는 코드지만, MLIR 관점에서 다시 보기
-   @torch.compile
-   def f(x):
-       return x * 2 + 1
-   
-   # 내부적으로:
-   # 1. Dynamo가 FX Graph 추출
-   # 2. AOTAutograd가 forward/backward 분리
-   # 3. Inductor가 Triton 커널 생성
-   # 4. Triton이 TTIR → TTGIR → LLVM → PTX 컴파일
-   #
-   # Triton-to-tile-IR가 바꾸는 부분:
-   # 4. Triton이 TTIR → CUDA Tile IR → tileiras → GPU binary
-   ```
-
-3. **블로그 초안 시작** (`blog-drafts/01-ai-compiler-landscape.md`):
-
-   제목: "AI 컴파일러 생태계를 torch.compile 개발자 시선으로 정리하기"
-
-   ```markdown
-   # AI 컴파일러 생태계를 torch.compile 개발자 시선으로 정리하기
-   
-   ## 동기
-   torch.compile backend를 만들면서 자연스럽게 AI 컴파일러 세계에 들어왔다.
-   Backend 하나를 만드는 건 할 수 있는데, 전체 생태계가 어떻게 연결되는지는 
-   의외로 정리된 자료가 없어서 직접 정리해본다.
-   
-   ## torch.compile의 구조 복습
-   (Dynamo → AOTAutograd → Backend 간단 설명)
-   
-   ## Backend의 선택지들
-   - TorchInductor + Triton (기본)
-   - XLA + StableHLO (Google/TPU)
-   - Triton + CUDA Tile IR (NVIDIA 신규)
-   - Custom backend (Legato 같은)
-   
-   ## 각 경로에서 MLIR이 어떻게 쓰이는지
-   (파이프라인 다이어그램)
-   
-   ## 왜 "dialect conversion"이 핵심인지
-   
-   ## 마무리: 이걸 알면 뭐가 좋은가
-   ```
+1. `notes/week01.md` 최종 정리
+2. `notes/week02.md`에 다음 주 질문 미리 적기
+3. Toy Tutorial Ch1 진입용 메모 작성
 
 **산출물:**
-- 생태계 조감도 다이어그램 (diagrams/ 에 커밋)
-- 블로그 초안 v0.1 (blog-drafts/ 에 커밋)
-- notes/week01.md 정리 완료
+- `notes/week01.md` 정리 완료
+- `notes/week02.md` 초안 준비
+- Phase 1 진입 전 질문 목록
 
 ---
 
@@ -434,26 +336,15 @@ Triton-to-tile-IR은 이 "교체"의 구체적인 예시.
 
 ---
 
-### Day 11 (주중 저녁, 1시간) — Triton 컴파일 파이프라인 조감
+### Day 11 (주중 저녁, 1시간) — Toy Tutorial 진입 준비
 
 **할 일:**
-1. Triton 메인 리포의 `third_party/nvidia/backend/compiler.py` 읽기
-   
-   이 파일에서 찾을 것:
-   - `make_ttir()`: 어떤 pass들이 적용되는지 (CSE, DCE, Canonicalize...)
-   - `make_ttgir()`: layout encoding이 어떻게 추가되는지
-   - `make_llir()`: LLVM IR로 어떻게 변환되는지
-   - `make_ptx()`, `make_cubin()`: 최종 코드 생성
+1. Toy Tutorial Ch1~2 목차를 훑고 다음 주 흐름 미리 보기
+2. `01_Intro.pdf`, `09_Intermediate_Representation.pdf`, `17_SSA.pdf`에서
+   다음 주에 연결할 부분 표시
+3. `notes/week02.md`에 "Phase 1에 들어가기 전에 꼭 확인할 질문" 추가
 
-2. Triton-to-tile-IR의 `third_party/tileir/backend/compiler.py`와 비교:
-   - 어떤 단계가 같고 어떤 단계가 다른지
-   - `ENABLE_TILE=1`일 때 어떤 분기가 활성화되는지
-
-3. **torch.compile에서 Triton이 호출되는 지점 복습:**
-   네가 이미 공부한 TorchInductor의 Triton codegen이 정확히 어디서
-   `make_ttir()` → `make_ttgir()` → ... 체인을 시작하는지 정리
-
-**산출물:** "Triton PTX 파이프라인 vs TileIR 파이프라인" 비교 메모
+**산출물:** Phase 1 진입 체크 메모
 
 ---
 
@@ -462,11 +353,11 @@ Triton-to-tile-IR은 이 "교체"의 구체적인 예시.
 **할 일:**
 1. LLVM Discourse 가입 + `[mlir]` 태그 구독
 2. LLVM Discord 가입 + `#mlir` 채널 입장
-3. GPU MODE Discord 가입
-4. GitHub Watch 설정: `triton-lang/Triton-to-tile-IR`, `triton-lang/triton`
+3. OpenXLA Discord 가입
+4. GitHub Watch 설정: `llvm/llvm-project`, `openxla/stablehlo`, `iree-org/iree`
 
 5. **관찰 과제 (읽기만):**
-   - Triton-to-tile-IR의 최근 PR 3개 열어보기
+   - StableHLO 또는 IREE의 최근 PR 3개 열어보기
      - 어떤 파일이 변경됐는지
      - 리뷰어가 어떤 코멘트를 다는지
      - 커밋 메시지 스타일
@@ -478,122 +369,43 @@ Triton-to-tile-IR은 이 "교체"의 구체적인 예시.
 
 ---
 
-### Day 13~14 (주말, 3~4시간) — 종합 정리 + 블로그 완성 + torch.compile 연결 심화
+### Day 13~14 (주말, 3~4시간) — 종합 정리 + Phase 1 진입 준비
 
-**Day 13 전반 (2시간) — torch.compile 관련 심화 정리:**
+**Day 13 전반 (2시간) — MLIR 기초 총정리:**
 
-1. **Legato backend의 위치를 생태계에서 매핑:**
-   ```
-   [일반적인 torch.compile backend 구조]
-   
-   class MyBackend:
-       def compile(self, gm: GraphModule, inputs):
-           # 1. FX Graph 받기
-           # 2. 내 IR로 변환 (= MLIR의 "dialect conversion")
-           # 3. 최적화 pass 적용 (= MLIR의 "transformation passes")
-           # 4. 하드웨어 코드 생성 (= MLIR의 "lowering to target")
-           return compiled_fn
-   
-   [Legato가 하는 것]
-   FX Graph → Legato IR (Python eDSL + MLIR) → HyperAccel binary
-   
-   [Triton-to-tile-IR가 하는 것]
-   TTIR → CUDA Tile IR → tileiras → GPU binary
-   
-   [StableHLO/XLA가 하는 것]
-   StableHLO → HLO → XLA optimized HLO → LLVM/PTX
-   
-   공통점: 전부 "higher-level IR → lower-level IR" 변환의 반복
-   ```
+1. `week01.md`, `week02.md`에서 중복 정리
+2. 아래 질문에 답할 수 있는지 확인
+   - operation / block / region / dialect를 자기 말로 설명 가능한가?
+   - block argument와 LLVM phi의 차이를 설명 가능한가?
+   - attribute와 operand/result/type의 차이를 설명 가능한가?
+   - Toy Ch1에 들어가도 AST / IR / SSA 연결이 머리에 잡혀 있는가?
 
-2. **torch.compile의 "guard + recompile" 메커니즘을 MLIR 관점에서 재해석:**
-   - Dynamo의 guard = MLIR의 "pre-condition for a compiled artifact"
-   - Graph break = MLIR의 "partial compilation boundary"
-   - AOTAutograd의 min-cut = 그래프 파티셔닝 (MLIR에서도 동일 문제 발생)
+**Day 13 후반 (1시간) — 계획 재정리:**
 
-3. **실험: torch.compile의 FX Graph와 Triton TTIR 비교**
-   ```python
-   # experiments/torch-compile-to-triton/
-   
-   import torch
-   from torch._dynamo import optimize
-   
-   def f(x, y):
-       return x @ y + x
-   
-   # FX Graph 확인
-   from torch.fx import symbolic_trace
-   traced = symbolic_trace(f)
-   print(traced.graph)
-   
-   # 이 FX Graph가 Inductor를 거쳐 Triton 커널이 되면
-   # TTIR에서는 tt.dot + arith.addf 같은 형태가 됨
-   ```
-
-**Day 13 후반 (1시간) — 블로그 글 완성:**
-
-블로그 초안을 다듬어서 게시 가능한 수준으로:
-
-```markdown
-# AI 컴파일러 생태계를 torch.compile 개발자 시선으로 정리하기
-
-## 1. 왜 이 글을 쓰는가
-- torch.compile backend 개발자로서 MLIR 세계에 입문
-- 프로젝트가 너무 많아서 정리가 필요했음
-
-## 2. torch.compile 복습 (짧게)
-- Dynamo → AOTAutograd → Backend
-- Backend는 교체 가능한 모듈
-
-## 3. Backend별 컴파일 경로 비교
-- TorchInductor + Triton (기본 경로)
-- XLA + StableHLO (Google/TPU 경로)
-- Triton + CUDA Tile IR (NVIDIA 새 경로)
-- Custom backend (Legato 등)
-(파이프라인 다이어그램 포함)
-
-## 4. 공통 패턴: "dialect conversion"
-- 모든 경로가 결국 "높은 수준 IR → 낮은 수준 IR" 변환의 반복
-- MLIR이 이 패턴을 infrastructure로 제공
-
-## 5. Triton-to-tile-IR: 구체적인 예시
-- 기존 Triton PTX 경로 vs TileIR 경로
-- 뭐가 바뀌고 뭐가 같은지
-
-## 6. 마무리
-- 이 조감도를 그리고 나니 MLIR 학습 방향이 명확해졌음
-- 다음 글: MLIR Toy Tutorial 시작기
-```
+- Phase 1에서 볼 강의 PDF 우선순위 재확인
+- Week 3 시작 체크리스트 작성
 
 **Day 14 (1~2시간) — 최종 정리 + 커밋:**
 
 1. `notes/week01.md`, `notes/week02.md` 최종 정리
-2. 블로그 글 최종 검수 (오타, 다이어그램 확인)
+2. Week 3 시작 전 체크리스트 정리
 3. GitHub 리포에 전체 커밋:
    ```
    compiler-study/
    ├── README.md                              ← 업데이트
    ├── notes/
    │   ├── week01.md                          ← MLIR 빌드, IR 문법, 디렉토리 구조
-   │   └── week02.md                          ← C++ 패턴, TableGen, Triton 파이프라인
-   ├── blog-drafts/
-   │   └── 01-ai-compiler-landscape.md        ← 블로그 글 완성본
+   │   └── week02.md                          ← C++ 패턴, TableGen, Phase 1 준비
    ├── experiments/
-   │   ├── mlir-basics/
+    │   ├── mlir-basics/
    │   │   ├── hello.mlir
    │   │   ├── tensor_ops.mlir
    │   │   ├── control_flow.mlir
    │   │   ├── memref_ops.mlir
    │   │   ├── regions.mlir
    │   │   └── blocks.mlir
-   │   ├── triton-ir-dumps/
-   │   │   └── vector_add.py                  ← (GPU 있으면 IR 덤프 포함)
-   │   └── torch-compile-to-triton/
-   │       └── fx_to_triton.py
-   └── diagrams/
-       ├── ai-compiler-ecosystem.md           ← 생태계 조감도 (Mermaid 또는 ASCII)
-       ├── torch-compile-to-mlir-mapping.md   ← torch.compile ↔ MLIR 매핑
-       └── triton-ptx-vs-tileir.md            ← 두 파이프라인 비교
+    └── diagrams/
+        └── ai-compiler-ecosystem.md           ← 큰 그림 메모 (선택)
    ```
 
 4. 블로그 게시 (선택지):
@@ -607,19 +419,15 @@ Triton-to-tile-IR은 이 "교체"의 구체적인 예시.
 | # | 항목 | 완료? |
 |---|------|-------|
 | 1 | MLIR 소스 빌드 성공, `mlir-opt` 동작 확인 | ☐ |
-| 2 | Triton-to-tile-IR 클론 + 디렉토리 구조 파악 | ☐ |
-| 3 | `compiler-study` GitHub 리포 생성 + 첫 커밋들 | ☐ |
-| 4 | .mlir 예제 파일 6개+ 작성 및 `mlir-opt`으로 확인 | ☐ |
-| 5 | MLIR Operation/Block/Region/Dialect 개념 자기 말로 설명 가능 | ☐ |
-| 6 | LLVM C++ 패턴 3개 (isa/cast, SmallVector, Builder) 인식 가능 | ☐ |
-| 7 | TableGen `.td` 파일이 뭐하는 건지 감 잡기 | ☐ |
-| 8 | Triton PTX 파이프라인 vs TileIR 파이프라인 비교 정리 | ☐ |
-| 9 | torch.compile ↔ MLIR 개념 매핑 정리 | ☐ |
-| 10 | AI 컴파일러 생태계 조감도 다이어그램 | ☐ |
-| 11 | 커뮤니티 가입 (Discourse, Discord, GitHub Watch) | ☐ |
-| 12 | 오픈소스 PR 관찰 (Triton-to-tile-IR 3개, MLIR 3개) | ☐ |
-| 13 | 블로그 글 1편 완성 | ☐ |
-| 14 | notes/week01.md + week02.md 정리 완료 | ☐ |
+| 2 | `compiler-study` GitHub 리포 생성 + 첫 커밋들 | ☐ |
+| 3 | .mlir 예제 파일 6개+ 작성 및 `mlir-opt`으로 확인 | ☐ |
+| 4 | MLIR Operation/Block/Region/Dialect 개념 자기 말로 설명 가능 | ☐ |
+| 5 | LLVM C++ 패턴 3개 (isa/cast, SmallVector, Builder) 인식 가능 | ☐ |
+| 6 | TableGen `.td` 파일이 뭐하는 건지 감 잡기 | ☐ |
+| 7 | notes/week01.md + week02.md 정리 완료 | ☐ |
+| 8 | 강의안의 IR/SSA/CFG 개념과 MLIR 예제를 연결해서 설명 가능 | ☐ |
+| 9 | 커뮤니티 가입 (Discourse, Discord, GitHub Watch) | ☐ |
+| 10 | 오픈소스 PR 관찰 (MLIR / StableHLO / IREE 중심) | ☐ |
 
 ---
 
@@ -629,11 +437,10 @@ Phase 0이 끝나면 넌 이런 상태여야 해:
 
 - `mlir-opt`에 .mlir 파일을 넣고 결과를 읽을 수 있다
 - MLIR의 기본 구조 (Operation, Block, Region, Dialect)를 설명할 수 있다
-- Triton-to-tile-IR의 디렉토리 구조를 알고, 핵심 파일이 어디 있는지 안다
-- 5개 프로젝트의 위치와 역할을 설명할 수 있다
+- Toy Tutorial Phase 1을 시작할 준비가 되어 있다
+- 강의안의 IR/SSA/CFG 개념을 MLIR 예제와 연결할 수 있다
 - LLVM C++ 코드를 봤을 때 "완전 외계어"가 아니라 "아 이건 Python의 XX랑 비슷하네" 수준
-- torch.compile 파이프라인과 MLIR 개념의 대응 관계를 설명할 수 있다
-- GitHub에 공개 학습 리포가 있고, 블로그 글 1편이 게시되어 있다
+- GitHub에 공개 학습 리포가 있고, 주간 노트가 정리되어 있다
 - 오픈소스 커뮤니티에 가입되어 있고, PR 문화를 관찰했다
 
 **이 상태가 아니면 Phase 1로 넘어가지 말고 더 시간을 쓸 것.**

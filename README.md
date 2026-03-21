@@ -1,18 +1,19 @@
 # Compiler Study
 
-Phase 0 setup for a 16-week compiler study plan focused on MLIR, Triton,
-and `triton-lang/Triton-to-tile-IR`.
+Phase 0 setup for a 16-week compiler study plan focused on MLIR fundamentals,
+hands-on IR practice, and compiler theory from lecture notes.
 
 ## Goal
 
 - Build solid MLIR fundamentals.
-- Read real compiler code instead of tutorial-only examples.
-- Contribute a small PR to `triton-lang/Triton-to-tile-IR`.
+- Study core compiler theory alongside MLIR practice.
+- Read real compiler code after the fundamentals are stable.
+- Contribute a small PR to an MLIR-related project later in the roadmap.
 - Publish at least one technical write-up during the journey.
 
 ## Current Focus
 
-- Phase 0: environment setup, ecosystem mapping, and compiler pipeline literacy.
+- Phase 0: environment setup, MLIR fundamentals, and compiler pipeline literacy.
 - Local machine mode: macOS study-first setup.
 - Constraint: CUDA Tile IR execution is not available on this machine.
 
@@ -36,8 +37,8 @@ and `triton-lang/Triton-to-tile-IR`.
 ```
 
 - `compiler-study/` holds notes, experiments, diagrams, and drafts.
-- `compiler-sources/` holds upstream repositories such as `llvm-project`,
-  `triton`, and `Triton-to-tile-IR`.
+- `compiler-sources/` holds upstream repositories such as `llvm-project` and,
+  in later phases, optional reference projects like `triton` or `Triton-to-tile-IR`.
 
 ## Phase 0 Outputs
 
@@ -45,8 +46,6 @@ and `triton-lang/Triton-to-tile-IR`.
 - `notes/week02.md`
 - `blog-drafts/01-ai-compiler-landscape.md`
 - `diagrams/ai-compiler-ecosystem.md`
-- `diagrams/torch-compile-to-mlir-mapping.md`
-- `diagrams/triton-ptx-vs-tileir.md`
 - starter files under `experiments/`
 
 ## Local Setup Notes
@@ -88,21 +87,19 @@ If the full test suite is needed later:
 cmake --build . --target check-mlir
 ```
 
-## Triton Study Mode on macOS
+## Later-Phase GPU Backend Notes on macOS
 
-- Treat Triton as code-reading and interpreter-mode tooling on this machine.
-- Use `TRITON_INTERPRET=1` for study-oriented experiments.
-- Read `Triton-to-tile-IR` locally, but expect CUDA/Blackwell execution to require
-  a separate Linux + NVIDIA environment.
+- Treat Triton as a later-phase reference project on this machine.
+- Use `TRITON_INTERPRET=1` only when the roadmap reaches backend study.
+- Read `Triton-to-tile-IR` locally later, but expect CUDA/Blackwell execution to
+  require a separate Linux + NVIDIA environment.
 
 ## Phase 0 Checklist
 
 - [ ] Build `llvm-project` MLIR tools.
-- [ ] Clone `triton-lang/triton`.
-- [ ] Clone `triton-lang/Triton-to-tile-IR`.
 - [ ] Run `mlir-opt` on the starter `.mlir` examples.
 - [ ] Finish `week01.md` and `week02.md` notes.
-- [ ] Complete the ecosystem and pipeline diagrams.
+- [ ] Complete the MLIR/compiler-theory notes and core diagrams.
 - [ ] Publish the first draft of the landscape article.
 
 ## Working Principle
