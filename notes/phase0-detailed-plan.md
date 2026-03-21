@@ -141,21 +141,8 @@
    └── memref_ops.mlir       ← memref 타입 사용
    ```
 
-3. **torch.compile 연결 포인트 정리:**
-   네가 이미 잘 아는 torch.compile 파이프라인을 MLIR 개념으로 다시 매핑:
 
-   ```
-   [torch.compile 파이프라인]              [MLIR 대응 개념]
-   ──────────────────────────              ───────────────────
-   Python 코드                            Source language
-   TorchDynamo (FX Graph 추출)            Frontend (AST → IR)
-   FX Graph                               High-level dialect (like Toy)
-   AOTAutograd (forward/backward 분리)     Graph transformation pass
-   Inductor IR (inner_fn, loop 구조)       Mid-level dialect (like Linalg)
-   Triton 커널 / C++ 코드                  Low-level dialect → codegen
-   ```
-
-**산출물:** .mlir 예제 4개 + "torch.compile ↔ MLIR 개념 매핑" 메모
+**산출물:** `.mlir` 예제 4개 읽고 MLIR 기본 개념 정리 메모 작성
 
 ---
 
