@@ -52,6 +52,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 - 각 block group의 Toy 주제와 직접 연결되는 PDF만 먼저 본다.
 - 구현은 Toy 중심으로 한다. StableHLO/IREE는 보조 예시이고, Triton은 후반 확장이다.
 - 강의 PDF는 하루 15~30분 분량으로 쪼개서 읽고, 한 번에 1개 전체를 끝내려 하지 않는다.
+- LLVM Kaleidoscope는 메인 트랙으로 넣지 않고, Toy와 frontend 구조를 비교하고 싶을 때만 선택 참고로 본다.
 
 ---
 
@@ -68,6 +69,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 - `01_Intro.pdf` 발췌
 - `09_Intermediate_Representation.pdf` 발췌
 - `17_SSA.pdf` 발췌
+- (선택) Kaleidoscope `LangImpl02` - AST / parser / frontend 흐름 비교용
 
 ### Block 17 (60~90분) — Toy Ch1: 언어와 AST
 
@@ -112,6 +114,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 4. **Lexer/Parser 코드 훑기** (C++ 깊이 이해 불필요, 구조만):
    - `examples/toy/Ch1/include/toy/Lexer.h`: 토큰 분류
    - `examples/toy/Ch1/include/toy/Parser.h`: recursive descent parser
+   - 필요하면 Kaleidoscope Ch2를 열어 AST / parser 구조만 비교
 
 **산출물:** `notes/week03.md` 시작 — "Toy 언어 요약, AST 구조, compiler pipeline과 AST의 위치"
 
