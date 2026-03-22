@@ -9,7 +9,7 @@
 
 ---
 
-## 2026-03-21
+## 2026-03-21(~B4)
 
 ### MLIR LangRef 첫 독해
 
@@ -337,3 +337,37 @@ func.func @loop_sum() -> i32 {
 LLVM으로 낮아질 때 block argument → phi로 변환됨.
 
 ---
+
+
+## 2026-03-21 (~B8)
+
+### Lexical analysis
+- 소스 코드를 문자 단위로 읽어 의미 있는 단위인 **토큰(token)** 으로 변환하는 단계.
+- `if (x > 0)` 같은 코드를 `IF`, `LPAREN`, `ID(x)`, `GT`, `NUM(0)`, `RPAREN` 등으로 쪼갬.
+- 공백, 주석 제거도 이 단계에서 처리하며, 결과물인 토큰 스트림을 파서에 넘김.
+
+### Parsing
+- 토큰 스트림이 언어의 **문법(grammar)** 규칙에 맞는지 검사하고, **AST(Abstract Syntax Tree)** 를 생성하는 단계.
+- 예를 들어 `x = 1 + 2` 는 대입 노드 아래 좌변 `x`와 우변 덧셈 노드가 붙는 트리로 표현됨.
+- 문법 오류(e.g. 괄호 불일치)는 이 단계에서 탐지됨.
+
+### Semantic analysis
+- 문법적으로는 맞더라도 **의미적으로 올바른지** 검사하는 단계 (타입 검사, 스코프 분석 등).
+- `int x = "hello"` 처럼 타입 불일치나, 선언하지 않은 변수 사용 등을 여기서 잡아냄.
+- 분석 결과는 **심볼 테이블(symbol table)** 에 기록되며, 이후 코드 생성 단계의 기반이 됨.
+
+### SSA (Static Single Assignment)
+- 각 변수가 정확히 한 번만 정의되는 IR 형태. 모든 use는 단 하나의 def를 가리킨다.
+- 분기 merge 지점에서 값이 합쳐질 때 φ(phi) 함수를 삽입해 어느 predecessor에서 왔는지 표현한다.
+- 데이터 흐름 분석·최적화(상수 전파, dead code 제거 등)가 단순해지는 것이 핵심 이점.
+
+### AST (Abstract Syntax Tree)
+- 파싱 결과를 트리로 표현한 것. 문법의 구체적 표기(괄호, 세미콜론 등)는 제거하고 의미 구조만 남긴다.
+- 노드: 연산자/제어구조/함수 호출 등. 리프: 리터럴·식별자.
+- semantic analysis, IR 생성, 최적화의 출발점. MLIR에서는 AST → MLIR dialect로 lower한다.
+
+### Toy Tutorial ch1
+- MLIR 공식 튜토리얼 첫 번째 챕터. 간단한 toy 언어의 AST 정의와 파서를 직접 구현한다.
+- 입력: toy 언어 소스 → 출력: `ToyAST` (Decl / Proto / Expr 노드 구조)
+- 목표: AST 노드 구조 이해 + MLIR dialect로 lower하기 위한 출발점 파악.
+- ref: https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/

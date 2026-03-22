@@ -217,42 +217,15 @@
    - Toy Tutorial Ch1 (읽기만, 코드 따라치기는 다음 Phase)
 
 2. 아래 개념을 자기 말로 정리:
-
-   **Operation** — MLIR의 기본 단위. "뭔가를 하는 것"
-   ```
-   %result = "dialect.op_name"(%operand1, %operand2) {attr = value} 
-              : (input_types) -> output_types
-   ```
-   - Python 비유: 함수 호출 (`result = f(arg1, arg2, key=value)`)
-
-   **Block** — operation의 선형 리스트 + block arguments
-   ```
-   ^bb0(%arg0: i32):
-     %0 = arith.addi %arg0, %arg0 : i32
-     return %0 : i32
-   ```
-   - Python 비유: 들여쓰기 된 코드 블록
-
-   **Region** — block의 모음. Operation 안에 nested 가능
-   ```
-   func.func @f() {
-     ^entry:           ← 이 블록들이 region을 구성
-       ...
-     ^loop_body:
-       ...
-   }
-   ```
-   - Python 비유: 함수 body, for 루프 body
-
-   **Dialect** — 관련 operation, type, attribute의 묶음
-   - Python 비유: 모듈/패키지 (`arith.addi`에서 `arith`가 dialect, `addi`가 op)
+   - Operation
+   - Block
+   - Region
+   - Dialect
+   각 항목당 2~4줄이면 충분.
 
 3. `.mlir` 파일로 직접 확인:
-   ```
-   experiments/mlir-basics/
-   ├── regions.mlir      ← nested region 예시 (scf.for 안에 scf.if)
-   └── blocks.mlir       ← 여러 block + branch 예시
-   ```
+   - `experiments/mlir-basics/regions.mlir`
+   - `experiments/mlir-basics/blocks.mlir`
 
 **산출물:** 개념 정리 메모 + .mlir 예제 2개
 
@@ -269,38 +242,10 @@
    - `mlir/Dialect.cpp`: dialect 등록
 
 3. **만나는 C++ 패턴 3개만 집중:**
-
-   (a) `llvm::isa / cast / dyn_cast`:
-   ```cpp
-   // C++
-   if (auto addOp = dyn_cast<arith::AddIOp>(op)) {
-     // addOp를 사용
-   }
-   
-   // Python 대응
-   if isinstance(op, arith.AddIOp):
-       # op를 사용
-   ```
-
-   (b) `SmallVector`:
-   ```cpp
-   // C++ — 스택에 4개까지, 그 이후 heap
-   SmallVector<Value, 4> operands;
-   operands.push_back(lhs);
-   
-   // Python 대응
-   operands = []
-   operands.append(lhs)
-   ```
-
-   (c) Builder 패턴:
-   ```cpp
-   // C++ — IR 노드를 만드는 factory
-   auto constOp = builder.create<arith::ConstantIntOp>(loc, 42, 32);
-   
-   // Python 대응 (Legato에서도 비슷한 패턴 쓸 것)
-   const_op = builder.create_constant(42, dtype=i32)
-   ```
+   - `llvm::isa / cast / dyn_cast`
+   - `SmallVector`
+   - Builder 패턴
+   예제 코드는 따로 길게 적지 말고, 어디에 쓰이는지만 메모한다.
 
 **산출물:** "LLVM C++ 패턴 치트시트" (notes/week02.md에 정리)
 
@@ -310,23 +255,10 @@
 
 **할 일:**
 1. Toy Ch2의 `Ops.td` 파일을 열고 `TransposeOp` 정의 읽기:
-   ```tablegen
-   def TransposeOp : Toy_Op<"transpose"> {
-     let summary = "transpose operation";
-     let arguments = (ins F64Tensor:$input);
-     let results = (outs F64Tensor);
-     // ...
-   }
-   ```
+   - 어떤 항목이 `summary`, `arguments`, `results`, `assemblyFormat`인지 확인
 
 2. **빌드 디렉토리에서 생성된 코드 확인:**
-   ```bash
-   # .td에서 자동 생성된 C++ 코드 찾기
-   find build/ -name "*.inc" | grep -i toy
-   # 생성된 파일을 열어서 TransposeOp에 해당하는 부분 찾기
-   ```
-   핵심 통찰: `.td` 파일은 "선언"이고, `mlir-tblgen`이 "구현"을 자동 생성한다.
-   Python의 dataclass나 Pydantic 모델에서 선언만 하면 메서드가 자동 생성되는 것과 비슷.
+   - 생성된 `.inc` 파일 위치만 찾고, `TransposeOp` 관련 부분이 생겼는지 확인
 
 3. **비교 읽기 — StableHLO의 .td 파일:**
    `openxla/stablehlo` 리포에서 `StablehloOps.td`를 GitHub에서 열어보기.
@@ -335,7 +267,7 @@
    - type inference
    - attribute 종류
 
-**산출물:** "TableGen은 Python의 XXX와 비슷하다" 비유 정리
+**산출물:** `Ops.td`에서 본 항목 정리 + StableHLO와의 짧은 비교 메모
 
 ---
 
@@ -377,11 +309,10 @@
 **Block 14 (60~120분) — MLIR 기초 총정리:**
 
 1. `week01.md`, `week02.md`에서 중복 정리
-2. 아래 질문에 답할 수 있는지 확인
-   - operation / block / region / dialect를 자기 말로 설명 가능한가?
-   - block argument와 LLVM phi의 차이를 설명 가능한가?
-   - attribute와 operand/result/type의 차이를 설명 가능한가?
-   - Toy Ch1에 들어가도 AST / IR / SSA 연결이 머리에 잡혀 있는가?
+2. 아래만 짧게 점검
+   - operation / block / region / dialect
+   - block argument vs LLVM phi
+   - attribute vs operand/result/type
 
 **Block 15 (45~60분) — 계획 재정리:**
 
@@ -392,28 +323,8 @@
 
 1. `notes/week01.md`, `notes/week02.md` 최종 정리
 2. Phase 1 시작 전 체크리스트 정리
-3. GitHub 리포에 전체 커밋:
-   ```
-   compiler-study/
-   ├── README.md                              ← 업데이트
-   ├── notes/
-   │   ├── week01.md                          ← MLIR 빌드, IR 문법, 디렉토리 구조
-   │   └── week02.md                          ← C++ 패턴, TableGen, Phase 1 준비
-   ├── experiments/
-    │   ├── mlir-basics/
-   │   │   ├── hello.mlir
-   │   │   ├── tensor_ops.mlir
-   │   │   ├── control_flow.mlir
-   │   │   ├── memref_ops.mlir
-   │   │   ├── regions.mlir
-   │   │   └── blocks.mlir
-    └── diagrams/
-        └── ai-compiler-ecosystem.md           ← 큰 그림 메모 (선택)
-   ```
-
-4. 블로그 게시 (선택지):
-   - 개인 블로그 / Velog / Medium
-   - 또는 GitHub README에 직접 게시해도 됨
+3. GitHub 리포에 전체 커밋
+4. 블로그/README 게시 여부는 선택
 
 ---
 
