@@ -1,14 +1,15 @@
 # Phase 0: 환경 세팅 + MLIR 기초 감각 만들기 — 상세 계획
 
-> **기간**: 2주 (1~2주차)
-> **시간**: 주중 저녁 1~1.5시간 + 주말 3~4시간
-> **핵심 산출물**: MLIR 빌드 완료, GitHub 학습 리포, Week 01~02 노트, MLIR 기초 예제
+> **범위**: Phase 0 순서형 Block 01~16
+> **진행 단위**: 순서형 Block (45~120분)
+> **핵심 산출물**: MLIR 빌드 완료, GitHub 학습 리포, `week01.md` / `week02.md` 노트, MLIR 기초 예제
+> **운영 원칙**: 날짜보다 순서를 따른다. 한 block이 밀리면 다음 날짜로 넘기지 말고, 같은 순서에서 이어서 한다.
 
 ---
 
-## Week 1: 빌드 + MLIR 기초 + 디렉토리 탐험
+## Blocks 01~08: 빌드 + MLIR 기초 + Toy 진입 준비
 
-### Day 1 (주중 저녁, 1.5시간) — 사전 준비
+### Block 01 (60~90분) — 사전 준비
 
 **할 일:**
 1. 빌드에 필요한 도구 설치 확인
@@ -44,7 +45,7 @@
 
 ---
 
-### Day 2 (주중 저녁, 1.5시간) — MLIR 소스 클론 + 빌드 시작
+### Block 02 (60~90분) — MLIR 소스 클론 + 빌드 시작
 
 **할 일:**
 1. llvm-project 클론 (시간이 걸리니 백그라운드로)
@@ -81,7 +82,7 @@
 
 ---
 
-### Day 3 (주중 저녁, 1시간) — 빌드 확인 + mlir-opt 첫 사용
+### Block 03 (45~60분) — 빌드 확인 + mlir-opt 첫 사용
 
 **할 일:**
 1. 빌드 결과 확인
@@ -123,7 +124,7 @@
 
 ---
 
-### Day 4 (주중 저녁, 1.5시간) — MLIR IR 문법 익히기
+### Block 04 (60~90분) — MLIR IR 문법 익히기
 
 **할 일:**
 1. MLIR Language Reference 핵심 부분 읽기 (전부 읽지 말고 아래만):
@@ -141,38 +142,40 @@
    └── memref_ops.mlir       ← memref 타입 사용
    ```
 
+3. `notes/week01.md`에 바로 남길 것
+   - Operation / Block / Region / Dialect 첫 정리
+   - attribute vs operand/result/type 메모
+   - 예제 파일 2~3개를 보고 이해한 내용을 자기 말로 1~2문장씩 적기
 
-**산출물:** `.mlir` 예제 4개 읽고 MLIR 기본 개념 정리 메모 작성
+
+**산출물:** `.mlir` 예제 4개 읽기 + `notes/week01.md`의 LangRef/기초 개념 1차 정리
 
 ---
 
-### Day 5 (주중 저녁, 1시간) — 수업 자료와 MLIR 개념 연결
+### Block 05 (60~120분) — `01_Intro.pdf` 전체 읽기 + MLIR 위치 연결
 
 **할 일:**
-1. 강의 PDF에서 IR/SSA/basic block 관련 장표 다시 보기
-   - `01_Intro.pdf`
-   - `09_Intermediate_Representation.pdf`
-   - 필요하면 `17_SSA.pdf` 앞부분
+1. `01_Intro.pdf`를 오늘은 끝까지 읽는다.
+   - 다만 모든 슬라이드를 완벽히 이해하려 하지 말고, 먼저 pipeline 큰 그림을 잡는다.
+   - 체크할 것: lexer / parser / semantic analysis / IR / optimization / codegen
+   - `09_Intermediate_Representation.pdf`, `17_SSA.pdf`는 오늘 필수 아님; Phase 1 Block 18~19에서 다시 붙인다
 
-2. 이미 만든 `.mlir` 예제를 다시 열어 아래 개념과 연결
-   - operation
-   - value
-   - block
-   - region
-   - dialect
+2. 시간과 집중력이 조금 남으면 아래 둘만 연결
+   - "IR"이라는 말이 왜 필요한가?
+   - pipeline에서 내가 본 `.mlir`은 어디쯤에 있는가?
 
-3. `notes/week01.md`에 자기 말로 정리
-   - LangRef 용어 정리
-   - block argument vs LLVM phi
-   - attribute vs operand/result/type
+3. `notes/week01.md` 또는 별도 짧은 메모에 5줄 안팎으로 적기
+   - 강의안에서 본 compiler pipeline
+   - 내가 본 MLIR 예제가 그 안에서 어디에 있는지
+   - 아직 헷갈리는 용어 1~2개
 
-**산출물:** `notes/week01.md`의 LangRef/기초 개념 정리
+**산출물:** `01_Intro.pdf` 완독 표시 + "강의안 pipeline ↔ MLIR 예제" 짧은 연결 메모
 
 ---
 
-### Day 6~7 (주말, 3~4시간) — MLIR 기초 복습 + Toy 진입 준비
+### Blocks 06~08 (총 3~4시간) — MLIR 기초 복습 + Toy 진입 준비
 
-**Day 6 전반 (2시간) — MLIR 문서 + Toy 미리보기:**
+**Block 06 (60~90분) — MLIR 문서 + Toy 미리보기:**
 
 1. MLIR 공식 문서에서 아래만 다시 읽기
    - LangRef의 operation / block / region / attribute / type
@@ -182,7 +185,7 @@
    - Phase 1 들어가기 전에 AST / IR / SSA / dialect 개념을 한 번 더 고정
    - "강의안 개념 → Toy 구현"으로 이어질 준비 만들기
 
-**Day 6 후반 (1시간) — 예제 다시 읽기:**
+**Block 07 (45~60분) — 예제 다시 읽기:**
 
 이미 만든 `.mlir` 예제를 다시 열고 아래 질문에 답한다.
 
@@ -191,7 +194,7 @@
 - block argument는 어디서 보이는가?
 - region이 필요한 이유는 무엇인가?
 
-**Day 7 (1~2시간) — Week 1 정리 + Week 2 준비:**
+**Block 08 (45~90분) — 초반 블록 정리 + 다음 블록 준비:**
 
 1. `notes/week01.md` 최종 정리
 2. `notes/week02.md`에 다음 주 질문 미리 적기
@@ -204,13 +207,13 @@
 
 ---
 
-## Week 2: MLIR 핵심 개념 + LLVM C++ + 커뮤니티 진입
+## Blocks 09~16: MLIR 핵심 개념 + LLVM C++ + 커뮤니티 진입
 
-### Day 8 (주중 저녁, 1.5시간) — Operation / Block / Region 깊이 이해
+### Block 09 (60~90분) — Operation / Block / Region 깊이 이해
 
 **할 일:**
 1. MLIR 공식 문서에서 아래 읽기:
-   - "MLIR Language Reference" → Operations 섹션
+   - "MLIR Language Reference" → Operations 섹션 일부만 (30분 제한)
    - Toy Tutorial Ch1 (읽기만, 코드 따라치기는 다음 Phase)
 
 2. 아래 개념을 자기 말로 정리:
@@ -255,7 +258,7 @@
 
 ---
 
-### Day 9 (주중 저녁, 1시간) — LLVM 스타일 C++ 첫 만남
+### Block 10 (45~60분) — LLVM 스타일 C++ 첫 만남
 
 **할 일:**
 1. `llvm-project/mlir/examples/toy/Ch2/` 디렉토리 열기
@@ -303,7 +306,7 @@
 
 ---
 
-### Day 10 (주중 저녁, 1.5시간) — TableGen/ODS 첫 인상
+### Block 11 (60~90분) — TableGen/ODS 첫 인상
 
 **할 일:**
 1. Toy Ch2의 `Ops.td` 파일을 열고 `TransposeOp` 정의 읽기:
@@ -336,7 +339,7 @@
 
 ---
 
-### Day 11 (주중 저녁, 1시간) — Toy Tutorial 진입 준비
+### Block 12 (45~60분) — Toy Tutorial 진입 준비
 
 **할 일:**
 1. Toy Tutorial Ch1~2 목차를 훑고 다음 주 흐름 미리 보기
@@ -348,7 +351,7 @@
 
 ---
 
-### Day 12 (주중 저녁, 1시간) — 커뮤니티 진입 + PR 문화 관찰
+### Block 13 (45~60분) — 커뮤니티 진입 + PR 문화 관찰
 
 **할 일:**
 1. LLVM Discourse 가입 + `[mlir]` 태그 구독
@@ -369,9 +372,9 @@
 
 ---
 
-### Day 13~14 (주말, 3~4시간) — 종합 정리 + Phase 1 진입 준비
+### Blocks 14~16 (총 3~4시간) — 종합 정리 + Phase 1 진입 준비
 
-**Day 13 전반 (2시간) — MLIR 기초 총정리:**
+**Block 14 (60~120분) — MLIR 기초 총정리:**
 
 1. `week01.md`, `week02.md`에서 중복 정리
 2. 아래 질문에 답할 수 있는지 확인
@@ -380,15 +383,15 @@
    - attribute와 operand/result/type의 차이를 설명 가능한가?
    - Toy Ch1에 들어가도 AST / IR / SSA 연결이 머리에 잡혀 있는가?
 
-**Day 13 후반 (1시간) — 계획 재정리:**
+**Block 15 (45~60분) — 계획 재정리:**
 
 - Phase 1에서 볼 강의 PDF 우선순위 재확인
-- Week 3 시작 체크리스트 작성
+- Phase 1 시작 체크리스트 작성
 
-**Day 14 (1~2시간) — 최종 정리 + 커밋:**
+**Block 16 (45~90분) — 최종 정리 + 커밋:**
 
 1. `notes/week01.md`, `notes/week02.md` 최종 정리
-2. Week 3 시작 전 체크리스트 정리
+2. Phase 1 시작 전 체크리스트 정리
 3. GitHub 리포에 전체 커밋:
    ```
    compiler-study/
