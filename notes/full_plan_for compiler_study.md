@@ -98,6 +98,13 @@
 - 강의 PDF는 한 번에 1개를 끝내려 하지 말고, 해당 주차와 직접 연결되는 부분만 15~30분씩 발췌해서 읽는다.
 - LLVM Kaleidoscope 튜토리얼은 메인 트랙이 아니라, AST/parser/IR 생성 비교가 필요할 때만 선택 참고로 붙인다.
 
+### Kaleidoscope 선택 참고 맵
+
+- Ch1~2: Blocks 17~18 옆에서 lexer / parser / AST 비교용
+- Ch3: Blocks 18 / 38 옆에서 AST -> IR / LLVM IR 비교용
+- Ch5~7: Blocks 31~33 옆에서 control flow / SSA / mutable variable 비교용
+- Ch4, Ch8~10: Blocks 38~44 이후에만 선택 참고 (JIT, object file, debug info, 마무리)
+
 즉, 한 주 안에서 항상 세 층위를 연결한다:
 
 1. 이론: 수업 PDF
