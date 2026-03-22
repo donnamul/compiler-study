@@ -52,6 +52,14 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 - 각 block group의 Toy 주제와 직접 연결되는 PDF만 먼저 본다.
 - 구현은 Toy 중심으로 한다. StableHLO/IREE는 보조 예시이고, Triton은 후반 확장이다.
 - 강의 PDF는 하루 15~30분 분량으로 쪼개서 읽고, 한 번에 1개 전체를 끝내려 하지 않는다.
+- LLVM Kaleidoscope는 메인 트랙으로 넣지 않고, Toy와 frontend 구조를 비교하고 싶을 때만 선택 참고로 본다.
+
+### Kaleidoscope 선택 참고 맵
+
+- Ch1~2 -> Blocks 17~18
+- Ch3 -> Blocks 18 / 38
+- Ch5~7 -> Blocks 31~33
+- Ch4, Ch8~10 -> Blocks 38~44 이후 선택 참고
 
 ---
 
@@ -68,6 +76,8 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 - `01_Intro.pdf` 발췌
 - `09_Intermediate_Representation.pdf` 발췌
 - `17_SSA.pdf` 발췌
+- (선택) Kaleidoscope Ch1~2 - lexer / parser / AST 비교용
+- (선택) Kaleidoscope Ch3 - AST -> LLVM IR 비교용
 
 ### Block 17 (60~90분) — Toy Ch1: 언어와 AST
 
@@ -112,6 +122,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 4. **Lexer/Parser 코드 훑기** (C++ 깊이 이해 불필요, 구조만):
    - `examples/toy/Ch1/include/toy/Lexer.h`: 토큰 분류
    - `examples/toy/Ch1/include/toy/Parser.h`: recursive descent parser
+   - 필요하면 Kaleidoscope Ch2를 열어 AST / parser 구조만 비교
 
 **산출물:** `notes/week03.md` 시작 — "Toy 언어 요약, AST 구조, compiler pipeline과 AST의 위치"
 
@@ -355,6 +366,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 
 - `11_Control_Flow.pdf`
 - `12_Data_Flow.pdf`
+- (선택) Kaleidoscope Ch5~7 - control flow / SSA / mutable variable 비교용
 
 이번 주부터는 "변환"뿐 아니라 "변환 이후 어떤 분석이 가능해지는가"를 함께 본다.
 
@@ -477,6 +489,7 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 
 - `17_SSA.pdf` 재복습
 - `10_Instruction_Selection.pdf`는 선택적으로 읽되, LLVM IR 이후의 다음 단계가 어떤 문제를 다루는지 감만 잡는다
+- (선택) Kaleidoscope Ch4, Ch8~10 - JIT / object file / debug info / 마무리 참고용
 
 ### Block 38 (60~90분) — Ch6: LLVM Dialect으로 최종 Lowering
 
