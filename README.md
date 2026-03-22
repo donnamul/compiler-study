@@ -1,7 +1,7 @@
 # Compiler Study
 
-Phase 0 setup for a 16-week compiler study plan focused on MLIR fundamentals,
-hands-on IR practice, and compiler theory from lecture notes.
+Personal compiler-study repo centered on MLIR fundamentals, hands-on IR
+practice, and compiler theory from lecture notes.
 
 ## Goal
 
@@ -11,11 +11,24 @@ hands-on IR practice, and compiler theory from lecture notes.
 - Contribute a small PR to an MLIR-related project later in the roadmap.
 - Publish at least one technical write-up during the journey.
 
-## Current Focus
+## Study Direction
 
-- Phase 0: environment setup, MLIR fundamentals, and compiler pipeline literacy.
-- Local machine mode: macOS study-first setup.
-- Constraint: CUDA Tile IR execution is not available on this machine.
+- Learn compiler theory and MLIR together instead of treating MLIR as a detached tool.
+- Use Toy Tutorial as the first serious implementation track.
+- Bring in StableHLO/IREE before deep Triton backend work.
+- Keep backend-specific GPU work as a later-phase extension.
+
+## What This Repo Is
+
+- A study log for notes, experiments, diagrams, and comparison memos.
+- A lightweight workspace for MLIR/Toy learning outputs.
+- A place to track progress across a 16-week roadmap.
+
+## What This Repo Is Not
+
+- Not a source checkout for `llvm-project`, Triton, or other upstream repos.
+- Not a dump folder for copied docs or random scratch files.
+- Not a CUDA execution environment.
 
 ## Repo Layout
 
@@ -34,13 +47,34 @@ hands-on IR practice, and compiler theory from lecture notes.
 ~/dev/
 |-- compiler-study/
 |-- compiler-sources/
+
+~/Documents/Cmp./Cmp/
+|-- lecture PDFs
 ```
 
 - `compiler-study/` holds notes, experiments, diagrams, and drafts.
 - `compiler-sources/` holds upstream repositories such as `llvm-project` and,
   in later phases, optional reference projects like `triton` or `Triton-to-tile-IR`.
+- `/Users/juntaek/Documents/Cmp./Cmp` holds the compiler lecture PDFs used as the
+  theory track.
 
-## Phase 0 Outputs
+## Study Flow
+
+1. Read the relevant compiler lecture PDFs for theory.
+2. Read MLIR LangRef or Toy Tutorial sections for implementation structure.
+3. Run or inspect a minimal experiment under `experiments/`.
+4. Write the result back into `notes/`, `diagrams/`, or `blog-drafts/`.
+5. Only move to production compiler code after the current phase goals are clear.
+
+## Start Here
+
+- `notes/full_plan_for compiler_study.md` - master roadmap for all phases
+- `notes/phase0-detailed-plan.md` - MLIR basics and LangRef entry path
+- `notes/phase1-detailed-plan.md` - Toy Tutorial and compiler-theory integration
+- `notes/week01.md` - current detailed Phase 0 note example
+- `experiments/mlir-basics/` - first files to run with `mlir-opt`
+
+## Current Key Outputs
 
 - `notes/week01.md`
 - `notes/week02.md`
@@ -65,6 +99,8 @@ Verified on this machine:
 ## MLIR Build Baseline
 
 ```bash
+mkdir -p ~/dev/compiler-sources
+cd ~/dev/compiler-sources
 git clone --depth 1 https://github.com/llvm/llvm-project.git
 mkdir -p llvm-project/build
 cd llvm-project/build
@@ -93,6 +129,13 @@ cmake --build . --target check-mlir
 - Use `TRITON_INTERPRET=1` only when the roadmap reaches backend study.
 - Read `Triton-to-tile-IR` locally later, but expect CUDA/Blackwell execution to
   require a separate Linux + NVIDIA environment.
+
+## Verification Pattern
+
+- Phase 0: validate `.mlir` files with `mlir-opt`.
+- Phase 1: validate Toy Tutorial work with `toyc-chN` binaries and visible IR output.
+- Full upstream validation with `check-mlir` is optional and slow.
+- In this repo, notes and comparison memos are part of verification, not just test output.
 
 ## Phase 0 Checklist
 
