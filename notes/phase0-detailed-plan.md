@@ -207,9 +207,12 @@
 
 ---
 
-## Blocks 09~16: MLIR 핵심 개념 + LLVM C++ + 커뮤니티 진입
+## Blocks 09~16: 늦은 Phase 0 보강용 레퍼런스 블록
 
-### Block 09 (60~90분) — Operation / Block / Region 깊이 이해
+이미 `week01.md`, `01_Intro.pdf`, Toy Ch1 진입까지 했으면 이 구간은 필수 진도가 아니라
+부족한 부분만 메우는 reference/catch-up 블록으로 본다.
+
+### Block 09 (30~45분, 선택) — Operation / Block / Region 빠른 보강
 
 **할 일:**
 1. MLIR 공식 문서에서 아래 읽기:
@@ -227,11 +230,11 @@
    - `experiments/mlir-basics/regions.mlir`
    - `experiments/mlir-basics/blocks.mlir`
 
-**산출물:** 개념 정리 메모 + .mlir 예제 2개
+**산출물:** 부족한 개념만 짧게 보강 메모
 
 ---
 
-### Block 10 (45~60분) — LLVM 스타일 C++ 첫 만남
+### Block 10 (30~45분, 선택) — LLVM 스타일 C++ 첫 만남
 
 **할 일:**
 1. `llvm-project/mlir/examples/toy/Ch2/` 디렉토리 열기
@@ -247,11 +250,11 @@
    - Builder 패턴
    예제 코드는 따로 길게 적지 말고, 어디에 쓰이는지만 메모한다.
 
-**산출물:** "LLVM C++ 패턴 치트시트" (notes/week02.md에 정리)
+**산출물:** 필요하면 `notes/week02.md`에 C++ 패턴 3개 메모
 
 ---
 
-### Block 11 (60~90분) — TableGen/ODS 첫 인상
+### Block 11 (30~45분, 선택) — TableGen/ODS 첫 인상
 
 **할 일:**
 1. Toy Ch2의 `Ops.td` 파일을 열고 `TransposeOp` 정의 읽기:
@@ -267,11 +270,11 @@
    - type inference
    - attribute 종류
 
-**산출물:** `Ops.td`에서 본 항목 정리 + StableHLO와의 짧은 비교 메모
+**산출물:** 필요하면 `Ops.td` 메모 3~5줄
 
 ---
 
-### Block 12 (45~60분) — Toy Tutorial 진입 준비
+### Block 12 (20~30분, 선택) — Phase 1 진입 준비 점검
 
 **할 일:**
 1. Toy Tutorial Ch1~2 목차를 훑고 다음 주 흐름 미리 보기
@@ -279,11 +282,11 @@
    다음 주에 연결할 부분 표시
 3. `notes/week02.md`에 "Phase 1에 들어가기 전에 꼭 확인할 질문" 추가
 
-**산출물:** Phase 1 진입 체크 메모
+**산출물:** 필요하면 Phase 1 체크 메모 갱신
 
 ---
 
-### Block 13 (45~60분) — 커뮤니티 진입 + PR 문화 관찰
+### Block 13 (30~45분, 선택) — 커뮤니티 진입 + PR 문화 관찰
 
 **할 일:**
 1. LLVM Discourse 가입 + `[mlir]` 태그 구독
@@ -300,13 +303,13 @@
      - `good first issue` 태그 이슈 3개 읽기
      - NFC (Non-Functional Change) PR이 뭔지 확인
 
-**산출물:** "오픈소스 PR 관찰 메모" (커밋 메시지 컨벤션, 리뷰 문화)
+**산출물:** 필요하면 PR 관찰 메모
 
 ---
 
-### Blocks 14~16 (총 3~4시간) — 종합 정리 + Phase 1 진입 준비
+### Blocks 14~16 (선택) — 종합 정리 + Phase 1 진입 준비
 
-**Block 14 (60~120분) — MLIR 기초 총정리:**
+**Block 14 (30~60분, 선택) — MLIR 기초 총정리:**
 
 1. `week01.md`, `week02.md`에서 중복 정리
 2. 아래만 짧게 점검
@@ -314,17 +317,16 @@
    - block argument vs LLVM phi
    - attribute vs operand/result/type
 
-**Block 15 (45~60분) — 계획 재정리:**
+**Block 15 (20~30분, 선택) — 계획 재정리:**
 
 - Phase 1에서 볼 강의 PDF 우선순위 재확인
 - Phase 1 시작 체크리스트 작성
 
-**Block 16 (45~90분) — 최종 정리 + 커밋:**
+**Block 16 (20~45분, 선택) — 최종 정리:**
 
 1. `notes/week01.md`, `notes/week02.md` 최종 정리
 2. Phase 1 시작 전 체크리스트 정리
-3. GitHub 리포에 전체 커밋
-4. 블로그/README 게시 여부는 선택
+3. GitHub/README 정리는 선택
 
 ---
 

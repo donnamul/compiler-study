@@ -79,15 +79,15 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
 - (선택) Kaleidoscope Ch1~2 - lexer / parser / AST 비교용
 - (선택) Kaleidoscope Ch3 - AST -> LLVM IR 비교용
 
+이미 Phase 0의 LangRef / `.mlir` / `01_Intro.pdf` / `week01.md`를 충분히 했다면,
+Blocks 17~18은 개념 복습보다 Toy Ch1 코드 읽기와 AST 흐름 확인을 우선한다.
+
 ### Block 17 (60~90분) — Toy Ch1: 언어와 AST
 
 **할 일:**
-0. **수업 자료 먼저 20~30분 읽기:**
-   - `01_Intro.pdf` 전체를 읽지 말고 아래만 발췌:
-     - compiler pipeline 전체 그림
-     - front-end / IR / backend 구분
-     - optimization이 pipeline 어디에 들어가는지
-   - 목표: lexer → parser → semantic analysis → IR → optimization → codegen 흐름을 머리에 다시 올리기
+0. **선택 복습:**
+   - `01_Intro.pdf`는 아직 전체 그림이 약할 때만 10~20분 다시 본다
+   - 이미 읽었다면 바로 Toy Ch1 코드/AST로 넘어간다
 
 1. Toy Tutorial Ch1 문서 정독: https://mlir.llvm.org/docs/Tutorials/Toy/Ch-1/
    - Toy 언어의 문법 이해 (tensor 기반, double만, 불변)
@@ -119,24 +119,21 @@ Blocks 38~44: Ch6~7 + 17 재복습     → "전체 파이프라인이 하나로 
    ./build/bin/toyc-ch1 /tmp/test.toy -emit=ast
    ```
 
-4. **Lexer/Parser 코드 훑기** (C++ 깊이 이해 불필요, 구조만):
+4. **Lexer/Parser 코드 읽기** (이 block의 메인):
    - `examples/toy/Ch1/include/toy/Lexer.h`: 토큰 분류
    - `examples/toy/Ch1/include/toy/Parser.h`: recursive descent parser
    - 필요하면 Kaleidoscope Ch2를 열어 AST / parser 구조만 비교
 
-**산출물:** `notes/week03.md` 시작 — "Toy 언어 요약, AST 구조, compiler pipeline과 AST의 위치"
+**산출물:** `notes/week03.md` 시작 — "Toy 언어 요약, AST 구조, Lexer/Parser 흐름, compiler pipeline과 AST의 위치"
 
 ---
 
 ### Block 18 (60~90분) — Toy Ch2 (1): MLIR IR 생성
 
 **할 일:**
-0. **수업 자료 먼저 20~30분 읽기:**
-   - `09_Intermediate_Representation.pdf` 전체를 읽지 말고 아래만 발췌:
-     - 왜 IR이 필요한가
-     - AST와 IR의 차이
-     - machine-independent IR의 역할
-   - 목표: AST와 IR의 차이, machine-independent IR의 역할 정리
+0. **선택 복습:**
+   - `09_Intermediate_Representation.pdf`는 AST vs IR 감이 약할 때만 15~20분 다시 본다
+   - 이미 감이 있으면 바로 Toy Ch2 출력과 코드 대응으로 들어간다
 
 1. Toy Tutorial Ch2 문서 정독 (전반부):
    - Operation의 해부학: name, operands, results, attributes, regions, location
