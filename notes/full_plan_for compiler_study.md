@@ -97,6 +97,7 @@
 - StableHLO / IREE / 이후 Triton에서 "실전에서 어떻게 커지는지"를 확인한다.
 - 강의 PDF는 한 번에 1개를 끝내려 하지 말고, 해당 주차와 직접 연결되는 부분만 15~30분씩 발췌해서 읽는다.
 - LLVM Kaleidoscope 튜토리얼은 메인 트랙이 아니라, AST/parser/IR 생성 비교가 필요할 때만 선택 참고로 붙인다.
+- 이미 Phase 0에서 LangRef / `.mlir` / `01_Intro.pdf` / `week01.md`를 충분히 했다면, 늦은 Phase 0 블록은 reference/catch-up으로 내리고 바로 Phase 1 Toy 코드 읽기로 넘어간다.
 
 ### Kaleidoscope 선택 참고 맵
 
