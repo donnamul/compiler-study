@@ -8,7 +8,8 @@
 |------|----------|-------|
 | Master plan | `full_plan_for compiler_study.md` | Stage 0~4 — single source of truth for sequencing |
 | Stage 1 execution | `stage1-toy-mlir.md` | Toy Ch1~7 + parallel C++ track |
-| Stage 2 execution | `stage2-iree-deep-read.md` | IREE single-project deep read |
+| Stage 2 execution | `stage2-iree-deep-read.md` | IREE single-project deep read (backend pipeline view) |
+| Stage 2.5 execution | `stage2_5-cuda-tile.md` | NVIDIA/cuda-tile dialect design analysis (dialect design view) |
 | Stage 3 execution | `stage3-custom-dialect.md` | Out-of-tree mini dialect + Linalg lowering + bufferization |
 | Weekly log | `week01.md`, `week02.md`, ... | Session outputs and self-checks |
 | Old plans | `archive/` | Deprecated Phase 0/1 plans, kept for reference only |
@@ -29,5 +30,6 @@
 
 ## NOTES
 - External lecture PDFs live at `/Users/juntaek/Documents/Cmp./Cmp`; reference them, but do not mirror them here.
-- External source repos (`llvm-project`, `iree`, ...) live at `~/dev/compiler-sources/`; this directory remains output-focused.
+- External source repos (`llvm-project`, `iree`, `cuda-tile`, ...) live at `~/dev/compiler-sources/`; this directory remains output-focused.
+- For tile-related questions, the default reference is `NVIDIA/cuda-tile`'s ODS (Stage 2.5), not Triton internals / cuTile-python / TileGym / kernel-writer-side material — those are already-covered ground.
 - C++ proficiency is a known gap; the Stage 1 parallel C++ track is the primary remediation. Do not propose a separate "learn C++ first" track.

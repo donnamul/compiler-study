@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A personal **study log**, not a source tree. It holds notes, `.mlir` experiments, diagrams, and blog drafts produced while working through a Stage 0~4 MLIR-focused roadmap (no time deadlines). There is no build system here and nothing to compile from this directory.
 
-Upstream sources (`llvm-project`, `iree`, ...) live in a sibling workspace at `~/dev/compiler-sources/` and must **not** be checked out, mirrored, or referenced as if they were inside this repo. The `.gitignore` explicitly excludes them.
+Upstream sources (`llvm-project`, `iree`, `cuda-tile`, ...) live in a sibling workspace at `~/dev/compiler-sources/` and must **not** be checked out, mirrored, or referenced as if they were inside this repo. The `.gitignore` explicitly excludes them.
 
 ## Companion guidance
 
@@ -30,7 +30,8 @@ If the MLIR build does not yet exist, the baseline `cmake -G Ninja … -DLLVM_EN
 Active plan is **Stage 0~4** (no time deadlines). Source of truth: `notes/full_plan_for compiler_study.md`. Stage details:
 
 - `notes/stage1-toy-mlir.md` — Toy Tutorial Ch1~7 + parallel C++ track.
-- `notes/stage2-iree-deep-read.md` — IREE single-project deep read.
+- `notes/stage2-iree-deep-read.md` — IREE single-project deep read (backend pipeline view).
+- `notes/stage2_5-cuda-tile.md` — NVIDIA/cuda-tile dialect design analysis (dialect design view).
 - `notes/stage3-custom-dialect.md` — out-of-tree mini dialect + Linalg lowering + bufferization.
 
 Weekly logs are `notes/weekNN.md` (zero-padded). Deprecated Phase 0/1 plans live in `notes/archive/` — reference only, do not promote.
@@ -52,7 +53,8 @@ Every session should leave behind a note, a diagram update, a minimal experiment
 ## Anti-patterns specific to this project
 
 - Do not re-introduce the dropped tracks (v4 → v5 re-alignment): 22-PDF mandatory lecture parallel, Kaleidoscope, Triton internals deep-dive, Torch-MLIR torch-dialect bridge, 16-week deadline, mandatory blog/PR outputs, multi-project (StableHLO + IREE + Triton + cuTile) simultaneous comparison.
-- Production MLIR study is **single-project (IREE)**, not multi-project comparison.
+- Production MLIR study is **IREE for backend pipeline (Stage 2) + cuda-tile for dialect design (Stage 2.5)**, deliberately split by *perspective*, not multi-project comparison.
+- For tile-related questions, the default reference is `NVIDIA/cuda-tile`'s ODS, not Triton internals / cuTile-python / TileGym — those are already-covered ground (kernel-writer side).
 - Do not re-promote `notes/archive/phase0-detailed-plan.md` or `phase1-detailed-plan.md` to active.
-- Do not add `llvm-project/`, `iree/`, `triton/`, or CUDA artifacts inside this repo (gitignored for a reason).
+- Do not add `llvm-project/`, `iree/`, `cuda-tile/`, `triton/`, or CUDA artifacts inside this repo (gitignored for a reason).
 - C++ is a known gap; the Stage 1 parallel C++ track is the primary remediation. Do not propose a separate "learn C++ first" track.

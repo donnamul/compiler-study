@@ -1,4 +1,6 @@
-# Compiler Study 로드맵 — Stage 0~4 (v5, 2026-05-11 재정렬)
+# Compiler Study 로드맵 — Stage 0~4 (v5.1, 2026-05-11)
+
+> v5 → v5.1: Stage 2.5 (NVIDIA/cuda-tile dialect 디자인 분석) 추가. backend pipeline(IREE)과 dialect 디자인(cuda-tile) 두 관점을 분리하기 위함.
 
 > **목표**: MLIR을 익힌다. 그게 전부다.
 > **전제**:
@@ -24,6 +26,22 @@
 | Bufferization | 9주차 가볍게 | Stage 3에 본격 |
 | C++ 보강 | LLVM 패턴 표 한 장 | Stage 1 전반에 평행 트랙 |
 | 첫 PR / 블로그 | Phase 5 의무 | 제외 (관심 생기면 Stage 4 이후) |
+| Tile-IR reference | Triton/cuTile/TileGym 다 묶어서 후반 확장 | **`NVIDIA/cuda-tile` 한 개를 Stage 2.5로 분리** (dialect 디자인 관점) |
+
+---
+
+## Stage 구조 한 눈
+
+```
+Stage 0    MLIR 빌드 + LangRef + .mlir 6개                              [완료]
+Stage 1    Toy Ch1~7 + C++ 보강 트랙
+Stage 2    IREE 한 개를 깊게 (backend pipeline 관점)
+Stage 2.5  NVIDIA/cuda-tile dialect 디자인 분석 (dialect 디자인 관점)
+Stage 3    out-of-tree mini dialect + Linalg lowering + bufferization   ★
+Stage 4    회고 + 다음 결정
+```
+
+Stage 2와 2.5의 관계: IREE는 *backend pipeline 관점* (dispatch, lowering chain, bufferization 진입), cuda-tile은 *dialect 자체 디자인 관점* (tile 타입, layout encoding, op interface, bytecode). 두 관점을 합치면 학습 흐름이 흐려져서 분리.
 
 ---
 
@@ -85,6 +103,34 @@
 
 ---
 
+## Stage 2.5 — NVIDIA/cuda-tile dialect 디자인 분석
+
+**왜 cuda-tile인가**:
+- 2025-11 공개된 ~1 MB짜리 MLIR-only dialect. **production quality + 한 사람이 거의 다 이해 가능한 사이즈**의 흔치 않은 조합.
+- HyperAccel LPU dialect 작업과 매핑이 직접적 (tile 타입 정의, layout/memory encoding, op interface, bytecode 직렬화).
+- 너 이미 본 영역(CuTe / CUTLASS / Triton autotuning / Helion)은 *kernel writer* 관점. cuda-tile은 *dialect designer* 관점이라 새 영역.
+
+**왜 Stage 2와 분리**: IREE는 backend pipeline, cuda-tile은 dialect 자체. 묶으면 학습 흐름 흐려짐.
+
+**무엇을 본다**:
+- `Dialect.td` + `Ops.td` 훑고 op 카테고리 분류 (compute / memory / layout / control)
+- `Types.td` + `AttrDefs.td` — tile 타입 정의와 layout/memory encoding ★
+- `Interfaces.td` — op interface 설계
+- `OpsCanonicalization.td` — fold / rewrite 패턴 한두 개
+- `Passes.td` 목록 + pass 한 개의 골격
+- (선택) `BytecodeOpcodes.td` — IR 직렬화
+
+**금지**:
+- cuda-tile의 모든 op 이해. 카테고리당 1개 깊이만.
+- kernel writing 관점. 이미 본 영역.
+- PTX / runtime / tileiras. MLIR 밖.
+
+**산출물**: `notes/stage2_5-cuda-tile-design-notes.md` — Stage 3 진입 직전 디자인 결정 표 (cuda-tile의 결정 + 그 이유 + chip dialect에서의 잠정 결정).
+
+**상세 plan**: `notes/stage2_5-cuda-tile.md`
+
+---
+
 ## Stage 3 — Custom Dialect + Linalg Lowering + Bufferization  ★ 핵심
 
 **왜 핵심인가**: 너 일이 LPU dialect 디자인 + lowering이다. Stage 1~2가 모두 이 stage를 위한 준비.
@@ -135,6 +181,7 @@ Stage 1~3을 끝낸 시점에서:
 | `notes/full_plan_for compiler_study.md` (이 파일) | Stage 0~4 마스터 |
 | `notes/stage1-toy-mlir.md` | Stage 1 상세 |
 | `notes/stage2-iree-deep-read.md` | Stage 2 상세 |
+| `notes/stage2_5-cuda-tile.md` | Stage 2.5 상세 |
 | `notes/stage3-custom-dialect.md` | Stage 3 상세 |
 | `notes/week01.md` | Stage 0 학습 로그 (LangRef + Toy Ch1 진입) |
 | `notes/week02.md` | 복귀 메모 + Stage 1 진입 직전 |
@@ -147,6 +194,6 @@ Stage 1~3을 끝낸 시점에서:
 
 - 한 session에서 하나는 남긴다: 노트, 다이어그램, 작은 실험, 비교 메모 중 하나.
 - 외부 자료는 인덱싱하지 말고 *내 말로 다시 적기*가 학습.
-- 상위 source(`llvm-project`, `iree`)는 *이 repo에 체크아웃하지 않는다* — `~/dev/compiler-sources/`에 둔다.
+- 상위 source(`llvm-project`, `iree`, `cuda-tile`)는 *이 repo에 체크아웃하지 않는다* — `~/dev/compiler-sources/`에 둔다.
 - 헷갈리는 게 나오면 강의 PDF에서 15~30분 발췌. 챕터 단위로 끝내려 하지 않는다.
 - 블록 단위 진행. 시간 라벨/데드라인은 없다. 한 블록 끝나면 다음 블록.

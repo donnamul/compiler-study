@@ -18,7 +18,7 @@ compiler-study/
 |------|----------|-------|
 | Understand repo purpose | `README.md` | Start here; contains workspace split and build baseline |
 | See the master roadmap | `notes/full_plan_for compiler_study.md` | Source of truth for Stage 0~4 ordering |
-| Execute current stage | `notes/stage1-toy-mlir.md`, `stage2-iree-deep-read.md`, `stage3-custom-dialect.md` | Block-level plans with 산출물 |
+| Execute current stage | `notes/stage1-toy-mlir.md`, `stage2-iree-deep-read.md`, `stage2_5-cuda-tile.md`, `stage3-custom-dialect.md` | Block-level plans with 산출물 |
 | Review weekly learning state | `notes/week01.md`, `notes/week02.md`, ... | Study-log style notes |
 | Look up an old plan | `notes/archive/` | Deprecated Phase 0/1 plans; reference only |
 | Run MLIR basics | `experiments/mlir-basics/` | Primary Phase 0 verification area |
@@ -38,8 +38,9 @@ compiler-study/
 - Do not assume `llvm-project/`, `iree/`, or CUDA artifacts belong inside this repo.
 
 ## UNIQUE STYLES
-- The roadmap is **Stage 0~4 with no time labels**: Toy → IREE single-project deep read → out-of-tree custom dialect + bufferization → retrospective.
-- Production MLIR study is single-project (IREE), not multi-project comparison.
+- The roadmap is **Stage 0~4 with no time labels**: Toy → IREE backend-pipeline read → cuda-tile dialect-design read → out-of-tree custom dialect + bufferization → retrospective.
+- Production MLIR study is split by **perspective**: IREE (Stage 2, backend pipeline) + cuda-tile (Stage 2.5, dialect design). Not multi-project simultaneous comparison.
+- For tile-related questions, the default reference is `NVIDIA/cuda-tile`'s ODS, not Triton internals / cuTile-python / TileGym.
 - Diagrams are tracked as `.md` files, typically Mermaid/text, not exported images.
 - Verification is lightweight and note-driven rather than CI-driven.
 
@@ -55,5 +56,5 @@ cmake --build /Users/juntaek/dev/compiler-sources/llvm-project/build --target ch
 ```
 
 ## NOTES
-- On this machine, Triton is later-phase study/reference work; CUDA execution is not the normal path.
+- Triton, `torch.compile` internals, and GPU kernel porting (Helion, CuTe, ROCm) are already-covered ground — not active study topics. CUDA execution is not the normal path on this machine.
 - If you add repo guidance, prefer `notes/` or `experiments/` child AGENTS.md files over bloating this root file.

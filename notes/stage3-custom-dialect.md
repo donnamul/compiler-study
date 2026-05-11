@@ -1,13 +1,14 @@
 # Stage 3 — Custom Dialect + Linalg Lowering + Bufferization  ★
 
 > **상위 plan**: `notes/full_plan_for compiler_study.md`
-> **선행 조건**: Stage 2 종료 조건 4개 모두 충족.
+> **선행 조건**: Stage 2 종료 조건 + Stage 2.5 종료 조건 (cuda-tile 디자인 결정 표) 모두 충족.
+> **핵심 입력**: `stage2_5-cuda-tile-design-notes.md`의 디자인 결정 표. mini dialect의 첫 디자인 결정은 거기서 빌려 시작한다.
 
 ---
 
 ## 왜 핵심인가
 
-HyperAccel LPU에서 하는 일이 결국 *custom dialect 디자인 + lowering + bufferization*이다. Stage 1~2는 이 stage를 위한 준비였다.
+HyperAccel LPU에서 하는 일이 결국 *custom dialect 디자인 + lowering + bufferization*이다. Stage 1~2.5는 이 stage를 위한 준비였다.
 
 ## 목표
 
