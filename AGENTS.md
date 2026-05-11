@@ -17,9 +17,10 @@ compiler-study/
 | Task | Location | Notes |
 |------|----------|-------|
 | Understand repo purpose | `README.md` | Start here; contains workspace split and build baseline |
-| See the master roadmap | `notes/full_plan_for compiler_study.md` | Source of truth for phase ordering |
-| Execute current phase | `notes/phase0-detailed-plan.md`, `notes/phase1-detailed-plan.md` | Day-by-day plans with outputs |
-| Review weekly learning state | `notes/week01.md`, `notes/week02.md` | Study-log style notes |
+| See the master roadmap | `notes/full_plan_for compiler_study.md` | Source of truth for Stage 0~4 ordering |
+| Execute current stage | `notes/stage1-toy-mlir.md`, `stage2-iree-deep-read.md`, `stage2_5-cuda-tile.md`, `stage3-custom-dialect.md` | Block-level plans with 산출물 |
+| Review weekly learning state | `notes/week01.md`, `notes/week02.md`, ... | Study-log style notes |
+| Look up an old plan | `notes/archive/` | Deprecated Phase 0/1 plans; reference only |
 | Run MLIR basics | `experiments/mlir-basics/` | Primary Phase 0 verification area |
 | Find visual summaries | `diagrams/` | Keep diagrams as markdown, not binaries |
 
@@ -31,13 +32,15 @@ compiler-study/
 - Weekly notes use `weekNN.md`; blog drafts use numbered prefixes like `01-...md`.
 
 ## ANTI-PATTERNS (THIS PROJECT)
-- Do not pull Triton or `torch.compile` backend deep-dives into early phases; Toy + LangRef + compiler theory come first.
-- Do not treat optional later-phase backend work as required current-phase work.
+- Do not re-insert the dropped tracks: 22-PDF mandatory lecture parallel, Kaleidoscope, Triton internals deep-dive, Torch-MLIR torch-dialect bridge (Legato sits in Inductor's slot), 16-week deadline, mandatory blog/PR outputs, multi-project (StableHLO + IREE + Triton + cuTile) simultaneous comparison. These were dropped on purpose during the v5 re-alignment.
+- Do not re-promote `notes/archive/phase0-detailed-plan.md` or `phase1-detailed-plan.md` to active.
 - Do not commit raw clutter; convert readings into notes, experiments, diagrams, or memos.
-- Do not assume `llvm-project/` or CUDA artifacts belong inside this repo.
+- Do not assume `llvm-project/`, `iree/`, or CUDA artifacts belong inside this repo.
 
 ## UNIQUE STYLES
-- The roadmap is MLIR-first: Toy, StableHLO, and IREE appear before Triton backend deep dives.
+- The roadmap is **Stage 0~4 with no time labels**: Toy → IREE backend-pipeline read → cuda-tile dialect-design read → out-of-tree custom dialect + bufferization → retrospective.
+- Production MLIR study is split by **perspective**: IREE (Stage 2, backend pipeline) + cuda-tile (Stage 2.5, dialect design). Not multi-project simultaneous comparison.
+- For tile-related questions, the default reference is `NVIDIA/cuda-tile`'s ODS, not Triton internals / cuTile-python / TileGym.
 - Diagrams are tracked as `.md` files, typically Mermaid/text, not exported images.
 - Verification is lightweight and note-driven rather than CI-driven.
 
@@ -53,5 +56,5 @@ cmake --build /Users/juntaek/dev/compiler-sources/llvm-project/build --target ch
 ```
 
 ## NOTES
-- On this machine, Triton is later-phase study/reference work; CUDA execution is not the normal path.
+- Triton, `torch.compile` internals, and GPU kernel porting (Helion, CuTe, ROCm) are already-covered ground — not active study topics. CUDA execution is not the normal path on this machine.
 - If you add repo guidance, prefer `notes/` or `experiments/` child AGENTS.md files over bloating this root file.
