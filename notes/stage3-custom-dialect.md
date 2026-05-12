@@ -1,22 +1,81 @@
-# Stage 3 — Custom Dialect + Linalg Lowering + Bufferization  ★
+# Stage 3 — out-of-tree mini conversion pass (A→B)  ★ 핵심
 
-> **상위 plan**: `notes/full_plan_for compiler_study.md`
-> **선행 조건**: Stage 2 종료 조건 + Stage 2.5 종료 조건 (cuda-tile 디자인 결정 표) 모두 충족.
-> **핵심 입력**: `stage2_5-cuda-tile-design-notes.md`의 디자인 결정 표. mini dialect의 첫 디자인 결정은 거기서 빌려 시작한다.
+> **상위 plan**: `notes/full_plan_for compiler_study.md` (v5.2)
+> **선행 조건**: Stage 2 (TTIR source) + Stage 2.5 (cuda-tile target) + Stage 2.7 (production conversion pass 정독) 종료. 특히 Stage 2.7의 "Stage 3에서 따라할 구조" 결정이 있어야 한다.
+> **핵심 입력**: `stage2_7-triton-to-tile-deep-read.md` 의 패턴 골격 + `stage2_5-cuda-tile-design-notes.md` 의 디자인 결정 표.
+
+---
+
+## v5.2 reframe — 무엇이 바뀌었나
+
+v5.1의 Stage 3는 "out-of-tree mini *dialect* 만들기"였다. v5.2에서는 **mini dialect-to-dialect *conversion pass* 짜기**가 중심이다. dialect 자체는 conversion pass의 source/target 으로 *필요한 만큼만* 정의한다.
+
+이유: 학습 종착점이 `Triton-to-tile-IR` 기여 — 거기서 손댈 곳은 conversion pattern이지 새 dialect가 아니다. *production에서 자기가 짤 코드*가 conversion pass 모양이라면 연습도 conversion pass여야 한다.
 
 ---
 
 ## 왜 핵심인가
 
-HyperAccel LPU에서 하는 일이 결국 *custom dialect 디자인 + lowering + bufferization*이다. Stage 1~2.5는 이 stage를 위한 준비였다.
+Stage 2.7에서 본 production conversion pass의 *축소 모델*을 자기 손으로 짠다. 이 행위가:
+- ConversionTarget / TypeConverter / OpConversionPattern 등록 / `populate*Patterns` 의 골격을 손에 박는다
+- layout / encoding 변환을 작은 규모에서 직접 다룬다
+- bufferization 진입을 직접 본다
+- 새 패턴 추가가 어떤 작업인지 *몸으로* 안다 — Stage 4의 첫 기여를 가능하게 한다
 
-## 목표
+"production-grade conversion"이 목표가 아님. **동작하는 미니 conversion pass**가 목표.
 
-- out-of-tree mini dialect 한 개를 ODS로 직접 만든다.
-- 그 dialect의 lowering pass 한 개를 작성해서 Linalg/arith/tensor 로 내린다.
-- bufferization pass를 끼워 tensor → memref 전환을 직접 관찰한다.
+---
 
-"production-grade dialect"가 목표가 아님. *동작하는 미니 dialect*가 목표.
+## 디자인 (Stage 2.5 / 2.7 입력을 받아 결정)
+
+### Source dialect: `chip`
+
+TTIR의 *축소 모델*. 3개 op만:
+- `chip.matmul (tensor<MxKxf32>, tensor<KxNxf32>) -> tensor<MxNxf32>` — `tt.dot` 의 microcosm
+- `chip.elementwise_add (tensor, tensor) -> tensor` — elementwise op 대표
+- `chip.layout_convert (tensor) -> tensor` (attribute로 layout) — TritonGPU `convert_layout` 의 microcosm
+
+### Target dialect: `tile`
+
+cuda-tile의 *축소 모델*. 2~3개 op만:
+- `tile.mma` — `chip.matmul` 의 target
+- `tile.elementwise` — `chip.elementwise_add` 의 target
+- (선택) `tile.layout_convert`
+
+### 핵심 변환: `ChipToTile` conversion pass
+
+`TritonToCudaTile.*` 의 축소 모델. Stage 2.7에서 본 골격을 그대로 따라간다:
+- ConversionTarget: `chip` illegal, `tile` legal
+- TypeConverter: tensor type을 (선택) tile 타입 또는 encoding을 가진 tensor 타입으로 변환
+- OpConversionPattern 3개: matmul / elementwise / layout_convert 각각
+
+### Layout encoding 결정
+
+Stage 2.5의 디자인 결정 표 + Stage 2의 TritonGPU encoding 학습에서 *하나만* 빌려서 적용. 후보:
+- attribute로 layout 표현 (TritonGPU 스타일)
+- 타입에 layout 인코딩 (cuda-tile 일부 케이스)
+- 그냥 dense layout으로 무시 (mini scale에서는 OK)
+
+학습 목적상 *최소 한 번은* layout이 보이는 변환을 짜본다 — 그래야 `convert_layout` 패턴이 손에 박힌다.
+
+---
+
+## C++ 메모
+
+Stage 3은 *처음으로 production 규모의 conversion pass를 자기 손으로 쓰는* 자리. Stage 1에서 *한 패턴* 짠 것과 다르게, 여기서는:
+- 자기 dialect 둘 (`chip`, `tile`) 의 ODS 정의 → 생성된 C++ 사용
+- `TypeConverter` 직접 등록 (Stage 1에서는 거의 안 짰음 — Toy 의 NegOp lowering은 type 변환이 trivial)
+- `populate*Patterns` 함수 자체를 직접 작성
+- CMake / out-of-tree build setup
+
+새로 손에 박을 C++ 패턴 (Stage 1 글로서리에 누적):
+- **CMake 의 `add_mlir_dialect(...)`, `add_mlir_doc(...)` 매크로**: out-of-tree dialect의 표준 빌드 설정. 한 번 설정해두면 거의 안 건드림. 막히면 `mlir/examples/standalone/` 의 CMakeLists를 거의 그대로 베낌.
+- **`TypeConverter` 의 `addConversion([&](TensorType t) { ... return newType; });`**: Block 4의 핵심. lambda로 *"이 타입을 이렇게 바꾼다"* 를 등록. Stage 2.7에서 본 패턴을 *직접 작성*.
+- **`addSourceMaterialization` / `addTargetMaterialization` / `addArgumentMaterialization`**: TypeConverter가 *변환된 type과 원래 type 사이에 cast op을 끼워야 할 때* 호출되는 callback. 처음 만나면 헷갈림 — *언제 호출되는지* 가 핵심. Block 4 에서 막히면 MLIR docs의 "Dialect Conversion" 페이지 발췌.
+- **`populate*Patterns(RewritePatternSet &patterns, TypeConverter &typeConverter, ...)`**: out-parameter 패턴 — Python의 return 값 대신 *주어진 컨테이너에 추가*. 이게 MLIR 전반의 표준 형태. 한 번 짜면 손에 박힘.
+- **CMake error vs C++ link error vs C++ compile error**: Stage 3 초반에 세 종류 모두 한 번씩 봄. 각각 어떻게 생겼는지 *익숙해지는* 것이 production 작업의 토대.
+
+**자가 점검**: Block 4 끝나고도 위 다섯 패턴 중 *셋 이상* 자기 말로 설명 못 하면, Stage 4 (실제 기여) 가 어려움. 그 경우 Stage 2.7로 잠깐 돌아가서 production 코드 한 패턴 더 정독.
 
 ---
 
@@ -25,98 +84,117 @@ HyperAccel LPU에서 하는 일이 결국 *custom dialect 디자인 + lowering +
 ### Block 1 — out-of-tree skeleton 만들기
 
 **할 일**
-1. `experiments/mini-dialect/`에 CMake 기반 out-of-tree MLIR 프로젝트 skeleton.
-   - 참고: `llvm-project/mlir/examples/standalone/` (있다면) 또는 IREE의 외부 dialect 예시.
-2. 빈 dialect `chip`를 등록하고 `chip-opt` 바이너리가 빌드되는 것까지.
-3. `chip-opt < /dev/null` 같은 sanity check.
+1. `experiments/mini-conversion/`에 CMake 기반 out-of-tree MLIR 프로젝트 skeleton.
+   - 참고: `llvm-project/mlir/examples/standalone/` (있다면) 또는 최근 standalone 예시.
+2. 빈 dialect 두 개 (`chip`, `tile`) 등록.
+3. `mini-opt` (또는 동등) 바이너리가 빌드되고 `--help` 가 동작.
+4. `mini-opt < /dev/null` sanity.
 
-**산출물**: 빌드되는 빈 dialect.
-
----
-
-### Block 2 — Op 정의 (ODS)
-
-**할 일**
-1. op 3~5개를 ODS로 정의:
-   - `chip.matmul (tensor<MxKxf32>, tensor<KxNxf32>) -> tensor<MxNxf32>`
-   - `chip.elementwise_add (tensor, tensor) -> tensor`
-   - `chip.layout_convert (tensor) -> tensor` (attribute로 layout 표현)
-2. 적절한 Traits 한두 개 (`Pure`, `SameOperandsAndResultElementType` 등) 붙임.
-3. `.td`에서 `assemblyFormat` 직접 작성해 IR이 사람 읽을 수 있게.
-
-**산출물**: `chip` dialect의 op 정의 + IR 예시 파일 한 개 (`chip-opt`로 round-trip 확인).
+**산출물**: 빌드되는 빈 두 dialect.
 
 ---
 
-### Block 3 — Verifier + Type inference (간소)
+### Block 2 — source dialect `chip` 정의
 
 **할 일**
-1. `chip.matmul`에 verifier 추가 (shape 호환성 확인).
-2. shape inference interface 한 op에만 시범적으로 붙임 (Stage 1 Ch4 복습).
-3. 잘못된 입력으로 verifier가 동작하는지 FileCheck 테스트 한 개.
+1. `chip` 의 3개 op을 ODS로 정의.
+2. 적절한 traits (`Pure`, `SameOperandsAndResultElementType` 등) 한두 개.
+3. `assemblyFormat` 직접 작성 — IR이 사람이 읽을 수 있게.
+4. `chip.layout_convert` 의 layout attribute 정의 (간소화된 BlockedEncoding 비슷한 것).
 
-**산출물**: verifier + 실패하는 케이스의 FileCheck.
+**산출물**: `chip` op 정의 + IR 예시 파일 (`mini-opt`로 round-trip 확인).
 
 ---
 
-### Block 4 — Lowering pass: `chip` → Linalg
+### Block 3 — target dialect `tile` 정의 (cuda-tile microcosm)
 
 **할 일**
-1. `chip.matmul → linalg.matmul`, `chip.elementwise_add → linalg.generic` 변환 pattern 작성.
-2. ConversionTarget을 `chip` dialect는 illegal, `linalg`/`arith`/`tensor`는 legal로 설정.
-3. 작은 입력으로 변환 확인:
+1. `tile` 의 2~3개 op을 ODS로 정의.
+2. (선택) cuda-tile의 *디자인 결정 하나* 빌려옴 — 예: layout을 type 안에 인코딩하기, 또는 attribute로 분리하기. 어느 쪽이든 *왜 그렇게 했는지* Stage 2.5 메모에서 가져온다.
+3. `tile` 의 IR 예시 한 개 만들고 round-trip.
+
+**산출물**: `tile` op 정의 + IR 예시. Stage 2.5 디자인 결정과의 연결 한 줄 메모.
+
+---
+
+### Block 4 — `ChipToTile` conversion pass ★ 가장 중요
+
+**할 일**
+1. Stage 2.7에서 본 `TritonToCudaTile` 골격을 *그대로* 따라간다.
+2. pass 클래스 + `runOnOperation()`:
+   - `ConversionTarget`: `chip` illegal, `tile`/`arith`/`tensor` legal
+   - `TypeConverter`: tensor → tensor-with-encoding (또는 tile 타입)
+   - `RewritePatternSet patterns`
+   - `populateChipToTilePatterns(patterns, typeConverter)` 함수 별도로
+   - `applyPartialConversion`
+3. 3개 OpConversionPattern 구현:
+   - `ChipMatmulToTileMma` — operand type 변환, attribute 매핑, result type
+   - `ChipElementwiseAddToTileElementwise` — 단순 매핑이지만 type converter 통과 확인
+   - `ChipLayoutConvertToTile` — layout attribute 변환 ★ (encoding 처리 손에 박히는 자리)
+4. 작은 입력으로 변환 확인:
    ```bash
-   chip-opt --chip-to-linalg input.mlir
+   mini-opt --chip-to-tile input.mlir
    ```
-4. Stage 1 Ch5의 Toy lowering 구조와 *나란히* 비교 메모.
+5. Stage 2.7에서 본 패턴 3개의 골격과 *나란히* 비교 메모. 차이가 있다면 왜 그런지.
 
-**산출물**: lowering pass 코드 + before/after IR.
+**왜 가장 중요한가**: Stage 2.7 정독을 *행위*로 바꾸는 자리. 여기를 안 짜면 Stage 2.7은 머리에서만 산다.
+
+**산출물**: `ChipToTile` pass 코드 + before/after IR + Stage 2.7 골격과의 비교 메모.
 
 ---
 
 ### Block 5 — Bufferization 끼우기
 
 **할 일**
-1. lowering 결과를 표준 bufferization pipeline에 통과:
+1. `chip → tile` 후의 IR을 표준 bufferization pipeline에 통과:
    ```
-   chip-opt input.mlir \
-     --chip-to-linalg \
+   mini-opt input.mlir \
+     --chip-to-tile \
      --one-shot-bufferize \
-     --convert-linalg-to-loops
+     [--convert-...-to-loops 등 필요한 것]
    ```
 2. tensor → memref 전환 지점을 IR에서 직접 본다.
-3. 필요시 `chip` op 중 하나에 `BufferizableOpInterface`를 시범적으로 구현 (선택).
+3. 필요시 `tile` op 중 하나에 `BufferizableOpInterface`를 시범적으로 구현 (선택).
 4. 어디서 alloc이 박히고 어디서 dealloc이 박히는지 메모.
+
+**왜 끼우는가**: cuda-tile은 결국 메모리 모델을 노출한다 (`unordered memory model`, `memory token`). 작은 규모에서 bufferization 진입을 직접 보지 않으면 cuda-tile의 메모리 의사결정이 추상적으로만 남는다.
 
 **산출물**: bufferize 후 IR + "alloc 위치 결정 원리" 짧은 메모.
 
 ---
 
-### Block 6 — Stage 3 회고
+### Block 6 — Stage 3 회고: 자기 손으로 짠 conversion pass 메모
 
 **할 일**
-1. `stage3-custom-dialect.md` 끝에 종합 회고:
-   - 새 dialect를 디자인할 때 가장 먼저 결정할 것 (op 단위, 타입, 메모리 모델, layout 표현 위치)
-   - lowering 경로를 선택하는 기준
-   - bufferization을 *언제* 박는지가 무엇을 결정하는지
-2. HyperAccel Legato와 *구조적으로* 매핑되는 부분 한 단락 (회사 자산은 안 적음 — 일반론으로).
+1. `stage3-mini-conversion-retro.md` 종합 회고:
+   - `ChipToTile` 짤 때 *가장 헷갈렸던* 부분 (대개 TypeConverter 또는 layout 처리)
+   - Stage 2.7 골격과 *나란히 짚어보면서* 보였던 production 코드의 의도
+   - 새 OpConversionPattern을 추가하라는 task를 받았을 때 어떤 순서로 손댈지 — 자기 말로 4~6단계
+2. Stage 2.7 산출물 `stage2_7-contribution-candidates.md` 를 다시 펴고, 각 후보에 대해:
+   - "이제 어디를 손대야 하는지 보이는가" 자기 평가
+   - 보인다면 다음에 *어느 후보부터* 손댈지
 
-**산출물**: 회고 메모 + Stage 4 진입 직전 정리.
+**산출물**: `stage3-mini-conversion-retro.md` + 갱신된 contribution-candidates 목록.
 
 ---
 
 ## Stage 3 종료 조건
 
-- `experiments/mini-dialect/`가 빌드되고 `chip-opt`가 동작한다.
-- `chip.matmul` 외 2개 이상의 op이 있고, verifier가 있다.
-- `chip → linalg` lowering이 동작한다.
-- bufferization 후 IR을 *읽고 설명할 수 있다*.
-- 새 dialect 디자인 시 결정 순서를 자기 말로 정리했다.
+- `experiments/mini-conversion/` 가 빌드되고 `mini-opt` 가 동작한다.
+- `chip` op 3개와 `tile` op 2~3개가 ODS로 정의되어 있고 round-trip 한다.
+- `ChipToTile` conversion pass가 동작하고 IR 변환 결과가 의도대로 나온다.
+- layout / encoding 처리를 *최소 한 번은* 직접 다뤘다.
+- bufferization을 끼워 tensor → memref 전환 IR을 읽고 설명할 수 있다.
+- Stage 2.7의 contribution candidate 목록 중 *최소 한 개*는 손댈 위치가 보인다.
 
-이 다섯이 되면 너는 "MLIR을 안다"고 말할 수 있다.
+이 여섯이 되면 Stage 4 진입. 그 시점에서 너는 "production conversion pass의 패턴 추가가 가능한 상태"다.
 
 ---
 
-## Stage 3 이후
+## 의도적으로 빼는 것
 
-`notes/full_plan_for compiler_study.md`의 Stage 4 회고로. 추가 학습은 그때 결정.
+- **production-grade dialect 디자인**. `chip` / `tile` 둘 다 학습용 microcosm. 완성도 추구하지 않는다.
+- **Linalg으로 내리기**. v5.1 plan에 있던 chip → Linalg 경로는 *학습 종착점이 바뀌었으므로* 빠진다. 굳이 보고 싶으면 Stage 4 이후 선택.
+- **HyperAccel LPU 매핑**. v5.1에 있던 Legato 매핑 메모는 secondary motivation으로 격하 — 이 stage는 OSS triton-to-tile-IR 기여 준비에 집중. LPU 회사 자산도 적지 않는다.
+- **여러 conversion pass 만들기**. 하나(`ChipToTile`)만. 두 번째를 짤 시간이 있으면 그건 Stage 4 이후의 실제 기여 작업.
+- **`tile` 의 모든 cuda-tile 특성 재현**. bytecode, 모든 trait, 모든 interface — 다 무시. 학습 목적상 필요한 *디자인 결정 한 개*만 빌려옴.
