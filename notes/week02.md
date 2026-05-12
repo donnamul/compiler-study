@@ -56,3 +56,30 @@
 - Can I explain operation/block/region/dialect in my own words?
 - Can I point to the file that likely owns TTIR -> CUDA Tile IR conversion?
 - Can I compare StableHLO, Triton IR, and Linalg at a high level?
+
+---
+
+## 2026-05-12
+
+### Generic function
+
+- a function defined with type parameters, allowing it to operate on various data types while maintaining type safety, rather than being restricted to a single specific type
+
+### toy tutorial Ch2 Emitting Basic MLIR
+
+- llvm의 한계 고정된 타입 시스템으로 인해 C/c++보다 높은 수준의 언어를 해석하는데 정말 힘들었다 non trivial loweing from their ast to llvm ir
+- 그래서 확장가능한 구조의 mlir 등장
+
+### general form of an operation
+
+- A name for the operation.
+- A list of SSA operand values.
+- A list of attributes.
+- A list of types for result values.
+- A source location for debugging purposes.
+- A list of successors blocks (for branches, mostly).
+- A list of regions (for structural operations like functions).
+
+### Opaque API
+
+- MLIR은 등록 안 된 op도 텍스트 그대로 받아들여서 round-trip은 되지만, 의미 검증은 안 해주니까 말도 안 되는 IR도 통과한다.
