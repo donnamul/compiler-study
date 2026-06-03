@@ -220,4 +220,15 @@ MLIR에서 자주 헷갈리는 한 글자 차이 — **둘은 다른 레이어�
 즉 **`Operation`은 데이터, `Op`(=`ConstantOp`)는 그 데이터를 특정 op으로 해석하는 type-safe lens.** `isa/cast/dyn_cast`가 이 둘 사이를 오가는 도구 (→ LLVM C++ pattern cheat sheet).
 
 ## 2026-06-03
-###
+
+### AST → MLIR 로 가면서 추가된 정보 3가지
+
+- **타입 정보** — AST 의 `VarDecl a` 에는 element type / shape 가 *암묵적* 이지만, MLIR 에선 `tensor<2x3xf64>` 처럼 *first-class* 로 박힌다. literal 에서 추출 가능한 shape 은 즉시 ranked, 아직 추론이 안 된 결과 (`toy.transpose` 의 출력) 는 `tensor<*xf64>` 로 unranked — Ch4 shape inference 가 이걸 좁힌다.
+- **SSA value 흐름** — AST 는 *노드 트리* (Call → var: a) 지만, MLIR 은 `%0`, `%1` 처럼 *value 한 개당 def 하나, use 여러 개* 의 그래프. `toy.transpose(%0 : ...)` 한 줄에 "이 op 의 입력은 `%0` 의 결과" 가 명시되고 그 결과가 `toy.print %1` 의 입력으로 이어진다. AST 에 없던 *데이터 흐름 그래프* 가 IR 표면에 떠오른다.
+- **dialect prefix (`toy.`)** — 모든 op 이름이 `dialect.opname` 으로 namespace 된다. `toy.func` / `toy.constant` / `toy.transpose` 가 모두 `toy` dialect 소속이라는 게 한눈에 보이고, 한 함수 안에 `arith.addi` + `memref.load` + `scf.for` 같이 *여러 dialect 혼용* 이 가능한 이유 — 이름 충돌을 prefix 가 해결한다. CRTP / trait / Op vs Operation 같은 C++ 기계장치는 결국 이 한 줄 텍스트를 type-safe 하게 만들기 위한 받침대.
+
+### 왜 IR 이 또 필요한가
+
+LLVM IR 의 고정된 타입 시스템은 C / C++ 같은 *시스템 언어 한 단계 위* 까지가 한계다. Python / DSL / tensor 언어처럼 *고수준 의미* 가 있는 코드를 AST 에서 LLVM IR 로 곧장 내리려 하면 — 정보가 손실되고, 한 번의 거대한 lowering 안에 typing / control flow / memory model / target-specific 결정이 *동시에* 들어가서 변환이 비현실적으로 복잡해진다 (Ch2 doc 의 "non-trivial lowering from their AST to LLVM IR").
+
+MLIR 의 답: 중간에 *언어 의미를 보존하는 dialect* 한 층을 끼우고, 그 수준에서 analysis / optimization 을 끝낸 다음 점진적으로 lower. 차별점은 *그 중간층을 하나가 아니라 여러 개* 둘 수 있다는 것 — `toy → affine → memref → llvm` 처럼 한 단계마다 한 종류의 결정만 내리면 된다. opaque API 는 dialect 가 아직 등록되지 않아도 IR 텍스트를 round-trip 시켜주는 받침대라, 새 dialect 를 점진적으로 끼워 넣는 *확장* 도 자연스럽다 — ML / DSL / hardware-specific dialect 가 같은 인프라 위에 공존할 수 있는 이유.
