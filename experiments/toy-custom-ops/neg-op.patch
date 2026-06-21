@@ -1,0 +1,87 @@
+diff --git a/mlir/examples/toy/Ch2/include/toy/Ops.td b/mlir/examples/toy/Ch2/include/toy/Ops.td
+index 91bf83a54..6a3c035b4 100644
+--- a/mlir/examples/toy/Ch2/include/toy/Ops.td
++++ b/mlir/examples/toy/Ch2/include/toy/Ops.td
+@@ -332,4 +332,25 @@ def TransposeOp : Toy_Op<"transpose"> {
+   let hasVerifier = 1;
+ }
+ 
++//===----------------------------------------------------------------------===//
++// NegOp
++//===----------------------------------------------------------------------===//
++
++def NegOp : Toy_Op<"neg"> {
++  let summary = "element-wise negation";
++
++  let arguments = (ins F64Tensor:$input);
++  let results = (outs F64Tensor);
++  
++  let assemblyFormat = [{
++    `(` $input `:` type($input) `)` attr-dict `to` type(results)
++  }];
++
++  // Allow building a NegOp from the input operand.
++  let builders = [
++    OpBuilder<(ins "Value":$input)>
++  ];
++
++}
++
+ #endif // TOY_OPS
+diff --git a/mlir/examples/toy/Ch2/mlir/Dialect.cpp b/mlir/examples/toy/Ch2/mlir/Dialect.cpp
+index 489f348c8..ef3cf2e5c 100644
+--- a/mlir/examples/toy/Ch2/mlir/Dialect.cpp
++++ b/mlir/examples/toy/Ch2/mlir/Dialect.cpp
+@@ -144,7 +144,8 @@ void ConstantOp::print(mlir::OpAsmPrinter &printer) {
+ llvm::LogicalResult ConstantOp::verify() {
+   // If the return type of the constant is not an unranked tensor, the shape
+   // must match the shape of the attribute holding the data.
+-  auto resultType = llvm::dyn_cast<mlir::RankedTensorType>(getResult().getType());
++  auto resultType =
++      llvm::dyn_cast<mlir::RankedTensorType>(getResult().getType());
+   if (!resultType)
+     return success();
+ 
+@@ -280,7 +281,8 @@ llvm::LogicalResult ReturnOp::verify() {
+   auto resultType = results.front();
+ 
+   // Check that the result type of the function matches the operand type.
+-  if (inputType == resultType || llvm::isa<mlir::UnrankedTensorType>(inputType) ||
++  if (inputType == resultType ||
++      llvm::isa<mlir::UnrankedTensorType>(inputType) ||
+       llvm::isa<mlir::UnrankedTensorType>(resultType))
+     return mlir::success();
+ 
+@@ -314,6 +316,12 @@ llvm::LogicalResult TransposeOp::verify() {
+   return mlir::success();
+ }
+ 
++void NegOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
++                  mlir::Value value) {
++  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
++  state.addOperands(value);
++}
++
+ //===----------------------------------------------------------------------===//
+ // TableGen'd op method definitions
+ //===----------------------------------------------------------------------===//
+diff --git a/mlir/examples/toy/Ch2/mlir/MLIRGen.cpp b/mlir/examples/toy/Ch2/mlir/MLIRGen.cpp
+index a9592bcd7..f43406cce 100644
+--- a/mlir/examples/toy/Ch2/mlir/MLIRGen.cpp
++++ b/mlir/examples/toy/Ch2/mlir/MLIRGen.cpp
+@@ -327,6 +327,15 @@ private:
+       return TransposeOp::create(builder, location, operands[0]);
+     }
+ 
++    if (callee == "neg") {
++      if (call.getArgs().size() != 1) {
++        emitError(location, "MLIR codegen encountered an error: toy.neg "
++                            "does not accept multiple arguments");
++        return nullptr;
++      }
++      return NegOp::create(builder, location, operands[0]);
++    }
++
+     // Otherwise this is a call to a user-defined function. Calls to
+     // user-defined functions are mapped to a custom call that takes the callee
+     // name as an attribute.
