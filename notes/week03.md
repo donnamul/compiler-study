@@ -114,7 +114,19 @@ toy.return %arg0
 
 ---
 
-## Glossary (Block 3~4)
+## 세 블록을 관통하는 것 (Block 3→4→5)
+
+| Block | 한 일 | 공통 축 |
+|-------|-------|---------|
+| 3 | op **추가** (`toy.neg`) | ODS 선언 → `.cpp` 구현 → frontend 연결 |
+| 4 | 기존 변형 **읽기** (`transpose∘transpose`) | `matchAndRewrite`로 IR 재작성 |
+| 5 | 변형 **직접 작성** (`mul(x,1)→x`) | ODS 스위치 → 패턴 구현 → 등록 |
+
+- 세 블록 다 **"ODS(`.td`)로 선언 / C++(`.cpp`)로 구현"** 이라는 같은 분리 구조를 반복한다 (builder / verifier / canonicalizer 다 이 꼴).
+- 결과 타입을 `tensor<*xf64>`로 뭉갠 채로 왔다 → **다음 Ch4(Block 6)의 shape inference**가 op interface로 이걸 구체 shape로 좁힌다.
+- `matchAndRewrite`는 여기선 *같은 dialect 안*의 재작성이었다 → **Block 7~8**에서 `adaptor` 하나 더 붙어 *dialect 간* 변환(Dialect Conversion)으로 확장된다. 오늘 손에 박은 게 그 토대.
+
+## Glossary (Block 3~5)
 
 | Term | 뜻 | Python 대응 |
 |------|----|-------------|
@@ -209,6 +221,12 @@ toy.return %1
 - `[[VAL_0:%.*]]` — SSA 이름을 하드코딩 대신 **캡처**해서 재사용.
 - `CHECK-NEXT` — mul이 사이에 남아있으면 실패 → **mul이 사라졌음을 증명**.
 - 실행: `toyc-ch3 t.toy -emit=mlir -opt | FileCheck t.toy` → PASS(exit 0). FileCheck는 빌드 유틸 (`cmake --build build -t FileCheck`).
+
+### 밑에서 실제로 도는 것 (놓치기 쉬운 3가지)
+
+- **패턴은 스스로 안 돈다** — `-opt`가 하는 일은 `toyc.cpp`에서 `createCanonicalizerPass()`를 `FuncOp`에 nested pass로 등록하는 것뿐. 그 **Canonicalizer pass**가 모든 op의 `getCanonicalizationPatterns`를 긁어모아 greedy하게 적용한다. 즉 `SimplifyMulByOne`은 *등록만* 하고, 구동은 pass가 한다. 이 **"pattern → 그걸 돌리는 pass"** 구도가 Block 7~8 Dialect Conversion의 뼈대와 같다.
+- **`replaceOp`는 uses만 바꾼다 → 나머지는 DCE** — `replaceOp(op, {lhs})`는 mul의 *결과를 쓰던 곳*을 `%arg0`로 갈아끼울 뿐, mul op 자체나 상수 `%0`을 지우진 않는다. 그런데 `-opt` 결과엔 `toy.constant`도 없이 `toy.return %arg0`만 남는다 — `MulOp`도 `ConstantOp`도 **`[Pure]`** trait이라, use가 사라져 dead가 되면 greedy driver가 제거(DCE)하기 때문. Pure가 아니었으면 상수가 남았을 것.
+- **DRR(`.td`) vs C++(`.cpp`) 갈림** — Ch3엔 선언형 패턴을 쓰는 `ToyCombine.td`도 있다(reshape 패턴들). `mul(x,1)`은 "operand가 splat 1인지" **값 판정**이 필요해 C++을 골랐다. 판정 술어를 DRR로 써도 결국 native C++이라 선언형 이점이 죽는다. → **판정 로직 有 = C++, 순수 모양 치환 = DRR**.
 
 ### 함정 메모 — `mul(a,1)` vs `a * 1`
 
