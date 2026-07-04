@@ -86,6 +86,8 @@ if (auto op = dyn_cast<arith::AddIOp>(value.getDefiningOp())) {
 | `OpRewritePattern<T>` | template + 가상 메서드 | rewrite 정의 |
 | `matchAndRewrite(T op, PatternRewriter&) const override` | `def rewrite(self, op)` (stateless) | 패턴 본체 — 매칭 op을 `rewriter`로 교체/삭제 |
 | `value.getDefiningOp<T>()` | `value.producer if isinstance(...) else None` | `Value` → 그 값을 만든 op으로 거슬러 + `T`로 캐스팅. 아니면 `nullptr` |
+| `OpInterface<"Name">` (ODS) | `Protocol` / ABC | op이 따르는 계약 정의. 범용 pass가 이것만 보고 작동 |
+| `DeclareOpInterfaceMethods<Iface>` (trait) | `class C(ABC)` 상속 후 구현 의무 | op에 interface 구현 의무 부여. 선언은 ODS 자동 생성, 구현만 `.cpp` |
 | `OpConversionPattern<T>` | OpRewritePattern + adaptor | dialect conversion |
 | `LogicalResult`, `success()` / `failure()` | `Optional` / status enum | 예외 대신 성공 표현 |
 | CRTP (`X : public Base<X>`) | — | trait, interface 구현 |
