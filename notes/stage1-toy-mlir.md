@@ -84,6 +84,7 @@ if (auto op = dyn_cast<arith::AddIOp>(value.getDefiningOp())) {
 | `mlir::Operation*` | op에 대한 raw pointer (non-owning) | op 변환 / 검사 |
 | `OpBuilder` / `ConversionPatternRewriter` | builder 패턴 / context manager | op 생성 |
 | `OpRewritePattern<T>` | template + 가상 메서드 | rewrite 정의 |
+| `matchAndRewrite(T op, PatternRewriter&) const override` | `def rewrite(self, op)` (stateless) | 패턴 본체 — 매칭 op을 `rewriter`로 교체/삭제 |
 | `OpConversionPattern<T>` | OpRewritePattern + adaptor | dialect conversion |
 | `LogicalResult`, `success()` / `failure()` | `Optional` / status enum | 예외 대신 성공 표현 |
 | CRTP (`X : public Base<X>`) | — | trait, interface 구현 |

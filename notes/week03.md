@@ -104,3 +104,70 @@ toy.neg does not accept multiple arguments
 ### 다음
 
 - Block 3 마무리. 다음은 Block 4 — Toy Ch3 (Pattern Rewrite + Canonicalization).
+
+## 2026-07-04
+
+### Block 4 — Toy Ch3: Pattern Rewrite + Canonicalization
+
+Block 3이 op *추가*(쓰기)였다면, Block 4는 op *변형/제거* 메커니즘. Block 7~8 Dialect Conversion의 전 단계 — `matchAndRewrite` 시그니처를 여기서 처음 만난다. 이번엔 코드를 짜지 않고 이미 있는 `TransposeTransposeOptPattern`이 IR을 실제로 바꾸는 걸 눈으로 확인.
+
+---
+
+#### `transpose(transpose(x)) → x` before / after
+
+테스트 `.toy`:
+
+```toy
+def transpose_transpose(a) {
+  return transpose(transpose(a));
+}
+
+def main() {
+  var a = [[1, 2, 3], [4, 5, 6]];
+  print(transpose_transpose(a));
+}
+```
+
+같은 파일을 `toyc-ch3`로 두 번 emit — 최적화 OFF/ON:
+
+| | `-emit=mlir` (opt 없음) | `-emit=mlir -opt` |
+|---|---|---|
+| `transpose_transpose` 본문 | `toy.transpose` **2개** (`%0`, `%1`가 체인) | **둘 다 소멸**, `toy.return %arg0` |
+| `main` | 변화 없음 | 변화 없음 (매칭될 transpose가 없음) |
+
+opt OFF:
+```mlir
+toy.func @transpose_transpose(%arg0: tensor<*xf64>) -> tensor<*xf64> {
+  %0 = toy.transpose(%arg0 : tensor<*xf64>) to tensor<*xf64>
+  %1 = toy.transpose(%0 : tensor<*xf64>) to tensor<*xf64>
+  toy.return %1 : tensor<*xf64>
+}
+```
+
+opt ON:
+```mlir
+toy.func @transpose_transpose(%arg0: tensor<*xf64>) -> tensor<*xf64> {
+  toy.return %arg0 : tensor<*xf64>
+}
+```
+
+**관찰**
+- `transpose(transpose(a)) == a` 항등식을 `TransposeTransposeOptPattern::matchAndRewrite`가 op 2개를 지우고 `%arg0`로 갈아끼운 결과. **패턴 코드 한 조각 = IR에서 op 소멸**.
+- 최적화는 opt-in — `-opt` 없으면 transpose 2개가 *남아있는 게* 정상. `-opt`가 내부에서 canonicalize pass를 돌려야 패턴이 적용된다.
+- 패턴은 *매칭되는 자리에만* 작동 → `@main`은 transpose가 없어 그대로.
+
+---
+
+#### fold vs pattern rewrite (5줄)
+
+1. **pattern rewrite** (`matchAndRewrite`): *여러 op에 걸친* 구조적 변형. 위 transpose-transpose처럼 op을 보고 새 op으로 교체하거나 통째로 제거. `RewritePatternSet`에 등록, `applyPatternsGreedily`로 구동.
+2. **fold** (`OpFoldResult fold(...)`): *op 하나*를 상수나 이미 존재하는 SSA value로 접는 경량 경로. 예: `add(x, 0) → x`, 상수 폴딩. 새 op을 **만들면 안 됨**(기존 값/attribute 반환만).
+3. 규모: fold는 single-op·no-new-op이 제약, pattern은 그 제약이 없어 multi-op 재작성까지 가능. "지금 op을 접기만 하면 되나 vs 주변 구조를 봐야 하나"가 갈림.
+4. 둘 다 canonicalization이 굴린다 — `hasFolder = 1`(fold) / `hasCanonicalizer = 1`(pattern)로 ODS에서 켬. fold가 먼저·싸게 시도되고, 구조 변형이 필요하면 pattern.
+5. DRR(TableGen 선언형)로도 pattern을 쓸 수 있지만(Quickstart), transpose-transpose는 C++ `OpRewritePattern`으로 작성 — 조건 로직이 있어 선언형보다 명령형이 편한 케이스.
+
+**산출물**: before/after IR 비교(위) + fold vs pattern 5줄. 글로서리에 `matchAndRewrite` 시그니처 추가.
+
+### 다음
+
+- Block 4 마무리. 다음은 Block 5 — 직접 rewrite 1개 + 최소 테스트 작성.
