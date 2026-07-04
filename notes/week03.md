@@ -122,10 +122,107 @@ toy.return %arg0
 | `Type::get(...)` factory | context가 캐싱·소유하는 lightweight handle | `intern()` 비슷 |
 | `emitError(loc, msg)` + `return nullptr` | 예외 없는 실패 전파 관용구 | `raise` 대신 `return None` |
 | `matchAndRewrite(T op, PatternRewriter&) const override` | 패턴 본체 — 매칭 op을 `rewriter`로 교체/삭제 (stateless) | `def rewrite(self, op)` |
+| `value.getDefiningOp<T>()` | `Value` → 만든 op + `T` 캐스팅. block arg 등이면 `nullptr` | producer 접근 + `isinstance` |
+| `DenseElementsAttr::isSplat()` / `getSplatValue<T>()` | 상수가 단일값 splat인지 / 그 값. **isSplat 먼저 안 보면 assert** | `arr.all_same()` / `arr[0]` |
 | `hasVerifier` / `hasFolder` / `hasCanonicalizer` | ODS 스위치 — 각각 verify/fold/canonicalize 메서드를 선언 생성 | — |
+
+---
+
+## Block 5 — canonicalization 패턴 직접 작성 (2026-07-04)
+
+Block 4에서 *읽은* 패턴을 이번엔 직접 *쓴다*. `mul(x, 1) → x` canonicalization 하나 +
+FileCheck 테스트. 산출물: `experiments/toy-rewrites/`.
+
+> **선언/구현 분리** (Block 3와 동일 구조): `.td`에 스위치 한 줄로 *선언* 생성 → `.cpp`에 *구현*.
+
+### 1. 스위치 — `Ops.td`
+
+```tablegen
+def MulOp : Toy_Op<"mul", [Pure]> {
+  // ...
+  let hasCanonicalizer = 1;   // MulOp::getCanonicalizationPatterns 선언을 자동 생성
+}
+```
+
+- `hasCanonicalizer`가 없으면 `.cpp`의 `getCanonicalizationPatterns` 정의가 "선언 없는 함수"라 컴파일 에러 → **`.td` 먼저**가 강제된다.
+
+### 2. 패턴 — `ToyCombine.cpp`
+
+```cpp
+struct SimplifyMulByOne : public mlir::OpRewritePattern<MulOp> {
+  SimplifyMulByOne(mlir::MLIRContext *context)
+      : OpRewritePattern<MulOp>(context, /*benefit=*/1) {}
+
+  llvm::LogicalResult
+  matchAndRewrite(MulOp op, mlir::PatternRewriter &rewriter) const override {
+    auto isSplatOne = [](ConstantOp c) {
+      if (!c) return false;                                   // 상수 아님 → 매칭 실패
+      auto v = c.getValue();                                  // DenseElementsAttr
+      return v.isSplat() && v.getSplatValue<double>() == 1.0; // isSplat() 먼저!
+    };
+    auto lhs = op.getOperand(0), rhs = op.getOperand(1);
+    if (isSplatOne(rhs.getDefiningOp<ConstantOp>())) {        // mul(x, 1) -> x
+      rewriter.replaceOp(op, {lhs}); return success();
+    }
+    if (isSplatOne(lhs.getDefiningOp<ConstantOp>())) {        // mul(1, x) -> x
+      rewriter.replaceOp(op, {rhs}); return success();
+    }
+    return failure();
+  }
+};
+
+void MulOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                        MLIRContext *context) {
+  results.add<SimplifyMulByOne>(context);   // 여기 등록해야 프레임워크가 집어감
+}
+```
+
+- `getDefiningOp<ConstantOp>()` — `Value`에서 *그 값을 만든 op*으로 거슬러 올라가 `ConstantOp`으로 캐스팅까지 한 번에. 아니면 `nullptr`. (`dyn_cast<ConstantOp>(v.getDefiningOp())`의 축약형)
+- **양쪽 operand 다 검사** — `mul`은 commutative라 `mul(1, x)`도 잡아야 한다.
+- **`isSplat()` 가드가 핵심** — `getSplatValue`를 non-splat 상수에 바로 부르면 assertion 크래시 (assert 빌드). splat 확인이 먼저.
+- `replaceOp(op, {lhs})` — 한 줄에 `Operation*`(op)과 `Value`(lhs)가 섞인다. op의 결과 *uses*를 lhs로 갈아끼움.
+
+### 3. 확인 — before / after
+
+```mlir
+// a * 1, before (-opt 없음)          // a * 1, after (-opt)
+%0 = toy.constant dense<1.0> : ...     toy.return %arg0
+%1 = toy.mul %arg0, %0 : ...
+toy.return %1
+```
+
+| 입력 | `-opt` | 판정 |
+|------|--------|------|
+| `a * 1` | `toy.return %arg0` | mul 소멸 |
+| `1 * a` | `toy.return %arg0` | commutative OK |
+| `a * [[1,2],[3,4]]` | mul 유지, exit 0 | non-splat → 매칭 X, **크래시 없음** |
+
+### 4. FileCheck
+
+```
+# RUN: toyc-ch3 %s -emit=mlir -opt 2>&1 | FileCheck %s
+# CHECK-LABEL: toy.func @f(
+# CHECK-SAME:              [[VAL_0:%.*]]: tensor<*xf64>) -> tensor<*xf64>
+# CHECK-NEXT:    toy.return [[VAL_0]] : tensor<*xf64>
+```
+
+- `[[VAL_0:%.*]]` — SSA 이름을 하드코딩 대신 **캡처**해서 재사용.
+- `CHECK-NEXT` — mul이 사이에 남아있으면 실패 → **mul이 사라졌음을 증명**.
+- 실행: `toyc-ch3 t.toy -emit=mlir -opt | FileCheck t.toy` → PASS(exit 0). FileCheck는 빌드 유틸 (`cmake --build build -t FileCheck`).
+
+### 함정 메모 — `mul(a,1)` vs `a * 1`
+
+처음에 `mul(a, 1)` 함수 호출로 썼더니 `toy.generic_call @mul`이 나와 패턴이 안 먹었다. Toy에서:
+
+- `neg` / `transpose` → **built-in 함수 호출** (`f(x)` 문법, MLIRGen이 이름으로 분기)
+- `mul` / `add` → **연산자** (`*`, `+`에서만 `toy.mul` 생성)
+
+같은 이름이라도 IR로 내려오는 경로가 다르다. 패턴은 `toy.mul`을 매칭하니 소스는 `*`를 써야 한다.
+
+**산출물**: `mul-by-one.patch` + `mul_by_one.toy`(FileCheck) → `experiments/toy-rewrites/`. 글로서리에 `getDefiningOp()` 추가.
 
 ---
 
 ## 다음
 
-- Block 5 — 직접 rewrite 1개 작성 (`mul(x,1)→x`) + FileCheck 테스트.
+- Block 5 마무리. 다음은 Block 6 — Toy Ch4: Interfaces (Shape Inference).
