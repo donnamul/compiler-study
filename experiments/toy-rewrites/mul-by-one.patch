@@ -1,0 +1,65 @@
+diff --git a/mlir/examples/toy/Ch3/include/toy/Ops.td b/mlir/examples/toy/Ch3/include/toy/Ops.td
+index 027b076af..9c97bca98 100644
+--- a/mlir/examples/toy/Ch3/include/toy/Ops.td
++++ b/mlir/examples/toy/Ch3/include/toy/Ops.td
+@@ -221,6 +221,9 @@ def MulOp : Toy_Op<"mul", [Pure]> {
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+   ];
++
++  // Enable registering canonicalization patterns with this operation.
++  let hasCanonicalizer = 1;
+ }
+ 
+ //===----------------------------------------------------------------------===//
+diff --git a/mlir/examples/toy/Ch3/mlir/ToyCombine.cpp b/mlir/examples/toy/Ch3/mlir/ToyCombine.cpp
+index f8397c2e0..f80f2ecbf 100644
+--- a/mlir/examples/toy/Ch3/mlir/ToyCombine.cpp
++++ b/mlir/examples/toy/Ch3/mlir/ToyCombine.cpp
+@@ -52,6 +52,36 @@ struct SimplifyRedundantTranspose : public mlir::OpRewritePattern<TransposeOp> {
+   }
+ };
+ 
++struct SimplifyMulByOne : public mlir:: OpRewritePattern<MulOp> {
++  SimplifyMulByOne(mlir::MLIRContext *context)
++      : OpRewritePattern<MulOp>(context, /*benefit=*/1) {}
++
++  llvm::LogicalResult
++  matchAndRewrite(MulOp op, mlir::PatternRewriter &rewriter) const override {
++    // A constant that is a splat of 1.0. Guard isSplat() before getSplatValue,
++    // otherwise a non-splat constant asserts.
++    auto isSplatOne = [](ConstantOp c) {
++      if (!c)
++        return false;
++      auto v = c.getValue();
++      return v.isSplat() && v.getSplatValue<double>() == 1.0;
++    };
++
++    auto lhs = op.getOperand(0);
++    auto rhs = op.getOperand(1);
++
++    if (isSplatOne(rhs.getDefiningOp<ConstantOp>())) { // mul(x, 1) -> x
++      rewriter.replaceOp(op, {lhs});
++      return success();
++    }
++    if (isSplatOne(lhs.getDefiningOp<ConstantOp>())) { // mul(1, x) -> x
++      rewriter.replaceOp(op, {rhs});
++      return success();
++    }
++    return failure();
++  }
++};
++
+ /// Register our patterns as "canonicalization" patterns on the TransposeOp so
+ /// that they can be picked up by the Canonicalization framework.
+ void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
+@@ -66,3 +96,8 @@ void ReshapeOp::getCanonicalizationPatterns(RewritePatternSet &results,
+   results.add<ReshapeReshapeOptPattern, RedundantReshapeOptPattern,
+               FoldConstantReshapeOptPattern>(context);
+ }
++
++void MulOp::getCanonicalizationPatterns(RewritePatternSet &results,
++                                         MLIRContext *context) {
++  results.add<SimplifyMulByOne>(context);
++}
+\ No newline at end of file
